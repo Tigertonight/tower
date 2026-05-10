@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "guard_form"
+display_name = "Guard Form"
+card_type = "skill"
+rarity = "basic"
+cost = 1
+description = "Gain 5 block."
+upgraded_description = "Gain 8 block."
+effects = Array[Dictionary]([{
+"type": "block",
+"amount": 5
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "block",
+"amount": 8
+}])

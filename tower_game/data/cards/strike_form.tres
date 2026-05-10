@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "strike_form"
+display_name = "Strike Form"
+card_type = "attack"
+rarity = "basic"
+cost = 1
+description = "Deal 6 damage."
+upgraded_description = "Deal 9 damage."
+effects = Array[Dictionary]([{
+"type": "damage",
+"amount": 6
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "damage",
+"amount": 9
+}])

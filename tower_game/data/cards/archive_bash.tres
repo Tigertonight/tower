@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "archive_bash"
+display_name = "Archive Bash"
+card_type = "attack"
+rarity = "basic"
+cost = 2
+description = "Deal 8 damage. Apply 2 Vulnerable."
+upgraded_description = "Deal 10 damage. Apply 3 Vulnerable."
+effects = Array[Dictionary]([{
+"type": "damage",
+"amount": 8
+}, {
+"type": "status",
+"status": "vulnerable",
+"amount": 2
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "damage",
+"amount": 10
+}, {
+"type": "status",
+"status": "vulnerable",
+"amount": 3
+}])

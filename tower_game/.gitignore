@@ -1,0 +1,6 @@
+.godot/
+export_presets.cfg
+*.tmp
+*.translation
+*.import
+*.uid

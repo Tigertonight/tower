@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "forward_step"
+display_name = "Forward Step"
+card_type = "skill"
+rarity = "common"
+cost = 0
+description = "Gain 3 block. Gain 1 energy."
+upgraded_description = "Gain 5 block. Gain 1 energy."
+effects = Array[Dictionary]([{
+"type": "block",
+"amount": 3
+}, {
+"type": "energy",
+"amount": 1
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "block",
+"amount": 5
+}, {
+"type": "energy",
+"amount": 1
+}])

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "break_rhythm"
+display_name = "Break Rhythm"
+card_type = "skill"
+rarity = "uncommon"
+cost = 1
+description = "Apply 2 Weak. Draw 1 card."
+upgraded_description = "Apply 3 Weak. Draw 1 card."
+effects = Array[Dictionary]([{
+"type": "status",
+"status": "weak",
+"amount": 2
+}, {
+"type": "draw",
+"amount": 1
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "status",
+"status": "weak",
+"amount": 3
+}, {
+"type": "draw",
+"amount": 1
+}])
