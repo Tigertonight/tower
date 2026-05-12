@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "errata_blow"
+display_name = "Errata Blow"
+card_type = "attack"
+rarity = "uncommon"
+cost = 2
+description = "Deal 18 damage."
+upgraded_description = "Deal 23 damage."
+effects = Array[Dictionary]([{"type": "damage", "amount": 18}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 23}])

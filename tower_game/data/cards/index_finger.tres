@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "index_finger"
+display_name = "Index Finger"
+card_type = "attack"
+rarity = "uncommon"
+cost = 1
+description = "Deal 8 damage. Apply 1 Vulnerable. Draw 1."
+upgraded_description = "Deal 10 damage. Apply 2 Vulnerable. Draw 1."
+effects = Array[Dictionary]([{"type": "damage", "amount": 8}, {"type": "status", "status": "vulnerable", "amount": 1, "target": "enemy"}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 10}, {"type": "status", "status": "vulnerable", "amount": 2, "target": "enemy"}, {"type": "draw", "amount": 1}])

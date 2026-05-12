@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "marginalia"
+display_name = "Marginalia"
+card_type = "skill"
+rarity = "uncommon"
+cost = 1
+description = "Apply 4 Ink. Draw 1 card."
+upgraded_description = "Apply 6 Ink. Draw 2 cards."
+effects = Array[Dictionary]([{
+"type": "status",
+"status": "ink",
+"amount": 4
+}, {
+"type": "draw",
+"amount": 1
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "status",
+"status": "ink",
+"amount": 6
+}, {
+"type": "draw",
+"amount": 2
+}])

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "cited_blow"
+display_name = "Cited Blow"
+card_type = "attack"
+rarity = "uncommon"
+cost = 1
+description = "Deal 11 damage. Gain 4 Block."
+upgraded_description = "Deal 14 damage. Gain 6 Block."
+effects = Array[Dictionary]([{"type": "damage", "amount": 11}, {"type": "block", "amount": 4}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 14}, {"type": "block", "amount": 6}])

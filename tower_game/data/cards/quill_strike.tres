@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "quill_strike"
+display_name = "Quill Strike"
+card_type = "attack"
+rarity = "common"
+cost = 1
+description = "Deal 7 damage. Apply 1 Ink."
+upgraded_description = "Deal 10 damage. Apply 2 Ink."
+effects = Array[Dictionary]([{
+"type": "damage",
+"amount": 7
+}, {
+"type": "status",
+"status": "ink",
+"amount": 1
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "damage",
+"amount": 10
+}, {
+"type": "status",
+"status": "ink",
+"amount": 2
+}])

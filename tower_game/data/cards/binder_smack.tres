@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "binder_smack"
+display_name = "Binder Smack"
+card_type = "attack"
+rarity = "common"
+cost = 1
+description = "Deal 10 damage. Lose 2 HP."
+upgraded_description = "Deal 14 damage. Lose 2 HP."
+effects = Array[Dictionary]([{"type": "damage", "amount": 10}, {"type": "lose_hp", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 14}, {"type": "lose_hp", "amount": 2}])

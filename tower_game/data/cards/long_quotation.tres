@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "long_quotation"
+display_name = "Long Quotation"
+card_type = "attack"
+rarity = "uncommon"
+cost = 1
+description = "Deal 5 damage 3 times."
+upgraded_description = "Deal 6 damage 3 times."
+effects = Array[Dictionary]([{"type": "damage", "amount": 5}, {"type": "damage", "amount": 5}, {"type": "damage", "amount": 5}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "damage", "amount": 6}, {"type": "damage", "amount": 6}])

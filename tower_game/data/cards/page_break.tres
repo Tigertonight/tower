@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "page_break"
+display_name = "Page Break"
+card_type = "attack"
+rarity = "uncommon"
+cost = 1
+description = "Deal 6 damage 2 times."
+upgraded_description = "Deal 8 damage 2 times."
+effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "damage", "amount": 6}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 8}, {"type": "damage", "amount": 8}])

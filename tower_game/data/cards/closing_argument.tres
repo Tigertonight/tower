@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "closing_argument"
+display_name = "Closing Argument"
+card_type = "attack"
+rarity = "rare"
+cost = 1
+description = "Deal 16 damage. Lose 3 HP."
+upgraded_description = "Deal 22 damage. Lose 3 HP."
+effects = Array[Dictionary]([{"type": "damage", "amount": 16}, {"type": "lose_hp", "amount": 3}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 22}, {"type": "lose_hp", "amount": 3}])

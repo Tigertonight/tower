@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "wax_seal"
+display_name = "Wax Seal"
+card_type = "skill"
+rarity = "common"
+cost = 1
+description = "Gain 6 block. Apply 1 Weak."
+upgraded_description = "Gain 8 block. Apply 2 Weak."
+effects = Array[Dictionary]([{"type": "block", "amount": 6}, {"type": "status", "status": "weak", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 8}, {"type": "status", "status": "weak", "amount": 2}])

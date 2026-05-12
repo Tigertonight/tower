@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "spilled_inkwell"
+display_name = "Spilled Inkwell"
+card_type = "skill"
+rarity = "uncommon"
+cost = 1
+description = "Apply 2 Ink to ALL enemies."
+upgraded_description = "Apply 3 Ink to ALL enemies."
+effects = Array[Dictionary]([{
+"type": "status_all_enemies",
+"status": "ink",
+"amount": 2
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "status_all_enemies",
+"status": "ink",
+"amount": 3
+}])

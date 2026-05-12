@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "footnote_charge"
+display_name = "Footnote Charge"
+card_type = "skill"
+rarity = "uncommon"
+cost = 0
+description = "Gain 1 Energy. Exhaust."
+upgraded_description = "Gain 1 Energy. Draw 1. Exhaust."
+effects = Array[Dictionary]([{"type": "energy", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "energy", "amount": 1}, {"type": "draw", "amount": 1}])
+exhaust_on_play = true
+card_target = "none"

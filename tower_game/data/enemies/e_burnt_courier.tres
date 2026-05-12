@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "e_burnt_courier"
+display_name = "Burnt Courier"
+tier = "normal"
+max_hp = 38
+art_path = "res://art/generated/sprites/burnt_courier.png"
+move_pool = Array[Dictionary]([{
+"move_id": "mv_dispatch",
+"weight": 4,
+"max_in_row": 1
+}, {
+"move_id": "mv_kindle",
+"weight": 1,
+"max_in_row": 1
+}, {
+"move_id": "mv_tamp",
+"weight": 2,
+"max_in_row": 1
+}])

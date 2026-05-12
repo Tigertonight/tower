@@ -4,6 +4,8 @@ export_presets.cfg
 *.translation
 *.import
 *.uid
+.DS_Store
+tmp/
 
 # Local verification screenshots.
 tower_game/ui_*.png

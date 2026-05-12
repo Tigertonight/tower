@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "final_clause"
+display_name = "Final Clause"
+card_type = "attack"
+rarity = "rare"
+cost = 2
+description = "Deal 12 damage. Apply 3 Weak. Apply 3 Vulnerable."
+upgraded_description = "Deal 16 damage. Apply 4 Weak. Apply 4 Vulnerable."
+effects = Array[Dictionary]([{"type": "damage", "amount": 12}, {"type": "status", "status": "weak", "amount": 3, "target": "enemy"}, {"type": "status", "status": "vulnerable", "amount": 3, "target": "enemy"}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 16}, {"type": "status", "status": "weak", "amount": 4, "target": "enemy"}, {"type": "status", "status": "vulnerable", "amount": 4, "target": "enemy"}])

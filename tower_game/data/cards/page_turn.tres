@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "page_turn"
+display_name = "Page Turn"
+card_type = "skill"
+rarity = "common"
+cost = 1
+description = "Draw 2 cards."
+upgraded_description = "Draw 3 cards."
+effects = Array[Dictionary]([{"type": "draw", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "draw", "amount": 3}])

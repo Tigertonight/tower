@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "burnt_clause"
+display_name = "Burnt Clause"
+card_type = "attack"
+rarity = "common"
+cost = 1
+description = "Deal 6 damage. Apply 1 Weak."
+upgraded_description = "Deal 8 damage. Apply 2 Weak."
+effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "status", "status": "weak", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 8}, {"type": "status", "status": "weak", "amount": 2}])

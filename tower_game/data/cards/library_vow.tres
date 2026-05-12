@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "library_vow"
+display_name = "Library Vow"
+card_type = "skill"
+rarity = "uncommon"
+cost = 1
+description = "Heal 4 HP. Exhaust."
+upgraded_description = "Heal 7 HP. Exhaust."
+effects = Array[Dictionary]([{"type": "heal_player", "amount": 4}])
+upgraded_effects = Array[Dictionary]([{"type": "heal_player", "amount": 7}])
+exhaust_on_play = true
+card_target = "self"

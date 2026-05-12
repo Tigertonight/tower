@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "clerks_pen"
+display_name = "Clerk's Pen"
+rarity = "common"
+description = "Every 3rd Attack you play deals 4 extra damage to the enemy."
+trigger = "card_played"
+effects = Array[Dictionary]([{"type": "damage", "target": "enemy", "amount": 4}])
+trigger_params = {"card_type_filter": "attack", "every_n": 3}

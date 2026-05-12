@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "dawn_kindling"
+display_name = "Dawn Kindling"
+rarity = "uncommon"
+description = "At the start of each turn, draw 1 additional card."
+trigger = "turn_start"
+effects = Array[Dictionary]([{"type": "draw", "amount": 1}])

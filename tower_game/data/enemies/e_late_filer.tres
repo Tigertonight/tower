@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "e_late_filer"
+display_name = "Late Filer"
+tier = "normal"
+max_hp = 28
+art_path = "res://art/generated/sprites/late_filer.png"
+move_pool = Array[Dictionary]([{"move_id": "mv_slap", "weight": 4, "max_in_row": 2}, {"move_id": "mv_gather", "weight": 2, "max_in_row": 1}, {"move_id": "mv_imprint", "weight": 1, "max_in_row": 1}])
+opener_move_ids = Array[String](["mv_slap"])

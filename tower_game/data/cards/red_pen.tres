@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "red_pen"
+display_name = "Red Pen"
+card_type = "attack"
+rarity = "uncommon"
+cost = 1
+description = "Deal 9 damage. Apply 2 Weak."
+upgraded_description = "Deal 12 damage. Apply 3 Weak."
+effects = Array[Dictionary]([{"type": "damage", "amount": 9}, {"type": "status", "status": "weak", "amount": 2, "target": "enemy"}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 12}, {"type": "status", "status": "weak", "amount": 3, "target": "enemy"}])

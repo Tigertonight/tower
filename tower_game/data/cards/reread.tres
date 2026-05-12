@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "reread"
+display_name = "Reread"
+card_type = "skill"
+rarity = "uncommon"
+cost = 1
+description = "Draw 2. Gain 4 Block."
+upgraded_description = "Draw 3. Gain 6 Block."
+effects = Array[Dictionary]([{"type": "draw", "amount": 2}, {"type": "block", "amount": 4}])
+upgraded_effects = Array[Dictionary]([{"type": "draw", "amount": 3}, {"type": "block", "amount": 6}])
+card_target = "self"

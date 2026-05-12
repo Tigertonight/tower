@@ -2,11 +2,15 @@ class_name CardView
 extends Button
 
 signal card_selected(card)
+signal card_hovered(card, anchor_position: Vector2)
+signal card_unhovered(card)
 
-const CARD_SIZE := Vector2(100, 112)
+const CARD_SIZE := Vector2(118, 154)
+const KeywordCatalogScript := preload("res://scripts/core/keyword_catalog.gd")
 
 var card
 var rest_position := Vector2.ZERO
+var rest_rotation := 0.0
 var cost_label: Label
 var rarity_label: Label
 var name_label: Label
@@ -14,6 +18,7 @@ var art_panel: PanelContainer
 var type_label: Label
 var rules_label: Label
 var glow_panel: Panel
+var art_rect: TextureRect
 
 
 func _ready() -> void:
@@ -30,12 +35,14 @@ func _ready() -> void:
 func setup(card_instance, available_energy: int, disabled_by_state: bool) -> void:
 	card = card_instance
 	rest_position = position
+	rest_rotation = rotation
+	pivot_offset = CARD_SIZE * 0.5
 	custom_minimum_size = CARD_SIZE
 	_build_card_body()
 	_add_card_styles()
 	_update_text()
 	disabled = disabled_by_state or card.get_cost() > available_energy
-	tooltip_text = "%s\n\n%s" % [card.get_display_name(), card.get_description()]
+	tooltip_text = _build_card_tooltip()
 	modulate = Color(0.58, 0.58, 0.58) if disabled else Color.WHITE
 
 
@@ -44,6 +51,7 @@ func refresh(available_energy: int, disabled_by_state: bool) -> void:
 		return
 	_update_text()
 	disabled = disabled_by_state or card.get_cost() > available_energy
+	tooltip_text = _build_card_tooltip()
 	modulate = Color(0.58, 0.58, 0.58) if disabled else Color.WHITE
 
 
@@ -68,25 +76,25 @@ func _build_card_body() -> void:
 	var box := VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.set_anchors_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = 7
-	box.offset_top = 6
-	box.offset_right = -7
-	box.offset_bottom = -6
-	box.add_theme_constant_override("separation", 1)
+	box.offset_left = 8
+	box.offset_top = 7
+	box.offset_right = -8
+	box.offset_bottom = -7
+	box.add_theme_constant_override("separation", 2)
 	root.add_child(box)
 
 	var header := HBoxContainer.new()
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	header.custom_minimum_size = Vector2(0, 22)
+	header.custom_minimum_size = Vector2(0, 24)
 	header.add_theme_constant_override("separation", 4)
 	box.add_child(header)
 
 	cost_label = Label.new()
 	cost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cost_label.custom_minimum_size = Vector2(24, 22)
+	cost_label.custom_minimum_size = Vector2(27, 24)
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	cost_label.add_theme_font_size_override("font_size", 16)
+	cost_label.add_theme_font_size_override("font_size", 18)
 	header.add_child(cost_label)
 
 	rarity_label = Label.new()
@@ -98,28 +106,29 @@ func _build_card_body() -> void:
 
 	name_label = Label.new()
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_label.custom_minimum_size = Vector2(0, 22)
+	name_label.custom_minimum_size = Vector2(0, 24)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_font_size_override("font_size", 14)
 	box.add_child(name_label)
 
 	art_panel = PanelContainer.new()
 	art_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	art_panel.custom_minimum_size = Vector2(0, 18)
+	art_panel.custom_minimum_size = Vector2(0, 48)
 	box.add_child(art_panel)
-	var art_label := Label.new()
-	art_label.name = "ArtGlyph"
-	art_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	art_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	art_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	art_label.add_theme_font_size_override("font_size", 16)
-	art_panel.add_child(art_label)
+	art_rect = TextureRect.new()
+	art_rect.name = "ArtImage"
+	art_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	art_rect.ignore_texture_size = true
+	art_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art_panel.add_child(art_rect)
 
 	type_label = Label.new()
 	type_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	type_label.custom_minimum_size = Vector2(0, 15)
+	type_label.custom_minimum_size = Vector2(0, 16)
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	type_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	type_label.add_theme_font_size_override("font_size", 10)
@@ -130,7 +139,7 @@ func _build_card_body() -> void:
 	rules_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	rules_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rules_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	rules_label.add_theme_font_size_override("font_size", 8)
+	rules_label.add_theme_font_size_override("font_size", 9)
 	box.add_child(rules_label)
 
 
@@ -139,14 +148,17 @@ func _update_text() -> void:
 		return
 	var rarity := String(card.data.rarity).to_upper()
 	var card_type := String(card.data.card_type).to_upper()
+	var loc = _loc()
+	if loc != null:
+		rarity = loc.enum_text(String(card.data.rarity))
+		card_type = loc.enum_text(String(card.data.card_type))
 	cost_label.text = str(card.get_cost())
 	rarity_label.text = rarity
 	name_label.text = card.get_display_name()
 	type_label.text = card_type
 	rules_label.text = card.get_description()
-	var art_label := art_panel.get_node_or_null("ArtGlyph") as Label
-	if art_label != null:
-		art_label.text = _type_glyph(String(card.data.card_type))
+	if art_rect != null:
+		art_rect.texture = _load_card_art_texture(String(card.data.id))
 
 
 func _on_pressed() -> void:
@@ -154,28 +166,86 @@ func _on_pressed() -> void:
 		card_selected.emit(card)
 
 
+func _build_card_tooltip() -> String:
+	if card == null:
+		return ""
+	var lines: Array[String] = []
+	lines.append(card.get_display_name())
+	lines.append("")
+	lines.append(card.get_description())
+	# Append a definition block for any keyword found in the rules text. Keeps
+	# the tooltip self-contained for first-time players, but stays terse so
+	# experienced players can ignore the trailing block.
+	var text_lower := String(card.get_description()).to_lower()
+	var seen: Dictionary = {}
+	for entry in KeywordCatalogScript.entries():
+		var id := String(entry.get("id", ""))
+		if id == "" or seen.has(id):
+			continue
+		var display := String(entry.get("display", id)).to_lower()
+		if text_lower.find(display) == -1:
+			continue
+		seen[id] = true
+		lines.append("")
+		lines.append("%s: %s" % [String(entry.get("display", id)), String(entry.get("summary", ""))])
+	return "\n".join(lines)
+
+
+func _loc():
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("/root/LocalizationManager")
+
+
 func _on_mouse_entered() -> void:
 	if disabled:
 		return
-	rest_position = position
-	z_index = 40
+	z_index = 200
 	var tween := create_tween()
-	tween.tween_property(self, "scale", Vector2(1.18, 1.18), 0.09)
-	tween.parallel().tween_property(self, "position", rest_position + Vector2(0, -34), 0.09)
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "scale", Vector2(1.28, 1.28), 0.11)
+	tween.parallel().tween_property(self, "position", rest_position + Vector2(0, -56), 0.11)
+	tween.parallel().tween_property(self, "rotation", 0.0, 0.11)
+	# Anchor for the inspector overlay = top-center of the resting card,
+	# in global (viewport) coordinates so the inspector can position itself
+	# regardless of where this CardView lives in the tree.
+	var anchor := global_position + Vector2(CARD_SIZE.x * 0.5, 0)
+	card_hovered.emit(card, anchor)
 
 
 func _on_mouse_exited() -> void:
 	z_index = 0
 	var tween := create_tween()
-	tween.tween_property(self, "scale", Vector2.ONE, 0.09)
-	tween.parallel().tween_property(self, "position", rest_position, 0.09)
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "scale", Vector2.ONE, 0.10)
+	tween.parallel().tween_property(self, "position", rest_position, 0.10)
+	tween.parallel().tween_property(self, "rotation", rest_rotation, 0.10)
+	card_unhovered.emit(card)
+
+
+func set_rest_pose(pos: Vector2, rot: float, layer: int) -> void:
+	rest_position = pos
+	rest_rotation = rot
+	position = pos
+	rotation = rot
+	z_index = layer
+	pivot_offset = CARD_SIZE * 0.5
 
 
 func _add_card_styles() -> void:
 	var palette := _palette_for_card()
-	add_theme_stylebox_override("normal", _card_box(palette["bg"], palette["border"], 2))
-	add_theme_stylebox_override("hover", _card_box(palette["bg"].lightened(0.08), palette["border"].lightened(0.18), 3))
-	add_theme_stylebox_override("pressed", _card_box(palette["bg"].lightened(0.14), palette["border"].lightened(0.25), 3))
+	var upgraded := card != null and bool(card.upgraded)
+	var border_width: int = 3 if upgraded else 2
+	if upgraded:
+		# Replace the border color with gold so upgraded cards stand out at a glance.
+		palette["border"] = Color(1.00, 0.84, 0.30)
+		palette["glow"] = Color(1.00, 0.78, 0.20, 0.18)
+	add_theme_stylebox_override("normal", _card_box(palette["bg"], palette["border"], border_width))
+	add_theme_stylebox_override("hover", _card_box(palette["bg"].lightened(0.08), palette["border"].lightened(0.18), border_width + 1))
+	add_theme_stylebox_override("pressed", _card_box(palette["bg"].lightened(0.14), palette["border"].lightened(0.25), border_width + 1))
 	add_theme_stylebox_override("disabled", _card_box(Color(0.11, 0.11, 0.11), Color(0.27, 0.25, 0.22), 1))
 	cost_label.add_theme_stylebox_override("normal", _round_box(Color(0.07, 0.11, 0.14), palette["border"], 2, 14))
 	name_label.add_theme_stylebox_override("normal", _strip_box(palette["strip"], palette["border"].darkened(0.15)))
@@ -218,6 +288,26 @@ func _palette_for_card() -> Dictionary:
 				"border": Color(0.75, 0.48, 0.95),
 				"glow": Color(0.65, 0.30, 1.00, 0.14)
 			}
+		"curse":
+			# Curse cards: heavy purple/black with red trim. Visibly oppressive.
+			return {
+				"bg": Color(0.07, 0.04, 0.05),
+				"strip": Color(0.12, 0.05, 0.07),
+				"type_bg": Color(0.20, 0.07, 0.10),
+				"art": Color(0.10, 0.05, 0.07),
+				"border": Color(0.70, 0.20, 0.30),
+				"glow": Color(0.40, 0.10, 0.18, 0.20)
+			}
+		"status":
+			# Status cards (slimes, dazes etc): muted grey-green.
+			return {
+				"bg": Color(0.07, 0.09, 0.07),
+				"strip": Color(0.11, 0.14, 0.10),
+				"type_bg": Color(0.16, 0.20, 0.14),
+				"art": Color(0.10, 0.13, 0.10),
+				"border": Color(0.55, 0.62, 0.40),
+				"glow": Color(0.30, 0.45, 0.20, 0.16)
+			}
 		_:
 			return {
 				"bg": Color(0.18, 0.15, 0.10),
@@ -227,18 +317,6 @@ func _palette_for_card() -> Dictionary:
 				"border": Color(0.74, 0.56, 0.27),
 				"glow": Color(0.80, 0.55, 0.20, 0.12)
 			}
-
-
-func _type_glyph(card_type: String) -> String:
-	match card_type:
-		"attack":
-			return "BLADE"
-		"skill":
-			return "WARD"
-		"power":
-			return "OATH"
-		_:
-			return "PAGE"
 
 
 func _card_box(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
@@ -311,3 +389,29 @@ func _glow_box(color: Color) -> StyleBoxFlat:
 	style.corner_radius_bottom_left = 7
 	style.corner_radius_bottom_right = 7
 	return style
+
+
+func _load_card_art_texture(card_id: String) -> Texture2D:
+	# Try the card-specific art first, then fall back to a per-type placeholder so
+	# attack/skill/power cards remain visually distinct even without bespoke art.
+	var candidates: Array[String] = [
+		"res://art/generated/cards/%s.png" % card_id,
+	]
+	var card_type := ""
+	if card != null and card.data != null:
+		card_type = String(card.data.card_type)
+		candidates.append("res://art/generated/cards/_placeholder_%s.png" % card_type)
+		candidates.append("res://art/generated/ui/placeholder_%s.png" % card_type)
+	candidates.append("res://art/generated/ui/card_back.png")
+	for path in candidates:
+		if not FileAccess.file_exists(path):
+			continue
+		var image := Image.new()
+		var err := image.load(path)
+		if err == OK:
+			return ImageTexture.create_from_image(image)
+	# As a last resort, generate a flat-color placeholder so the slot is never empty.
+	var palette := _palette_for_card()
+	var fallback := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	fallback.fill(palette.get("art", Color(0.14, 0.12, 0.09)))
+	return ImageTexture.create_from_image(fallback)

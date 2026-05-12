@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "writ_of_judgement"
+display_name = "Writ of Judgement"
+card_type = "attack"
+rarity = "rare"
+cost = 2
+description = "Deal 22 damage."
+upgraded_description = "Deal 30 damage."
+effects = Array[Dictionary]([{"type": "damage", "amount": 22}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 30}])

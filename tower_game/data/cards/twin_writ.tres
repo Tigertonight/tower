@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "twin_writ"
+display_name = "Twin Writ"
+card_type = "attack"
+rarity = "rare"
+cost = 1
+description = "Deal 9 damage 3 times."
+upgraded_description = "Deal 11 damage 3 times."
+effects = Array[Dictionary]([{"type": "damage", "amount": 9}, {"type": "damage", "amount": 9}, {"type": "damage", "amount": 9}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 11}, {"type": "damage", "amount": 11}, {"type": "damage", "amount": 11}])

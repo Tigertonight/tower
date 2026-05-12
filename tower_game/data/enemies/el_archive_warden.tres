@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "el_archive_warden"
+display_name = "Archive Warden"
+tier = "elite"
+max_hp = 85
+art_path = "res://art/generated/sprites/archive_warden.png"
+move_pool = Array[Dictionary]([{"move_id": "mv_heavy_stamp", "weight": 3, "max_in_row": 2}, {"move_id": "mv_set_seal", "weight": 2, "max_in_row": 1}, {"move_id": "mv_clause_strike", "weight": 2, "max_in_row": 2}, {"move_id": "mv_unknown_lunge", "weight": 1, "max_in_row": 1}])
+opener_move_ids = Array[String](["mv_set_seal"])

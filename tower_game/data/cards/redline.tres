@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "redline"
+display_name = "Redline"
+card_type = "attack"
+rarity = "uncommon"
+cost = 2
+description = "Deal 14 damage. Draw 1 card."
+upgraded_description = "Deal 18 damage. Draw 1 card."
+effects = Array[Dictionary]([{"type": "damage", "amount": 14}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 18}, {"type": "draw", "amount": 1}])

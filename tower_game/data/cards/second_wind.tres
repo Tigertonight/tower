@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "second_wind"
+display_name = "Second Wind"
+card_type = "skill"
+rarity = "rare"
+cost = 1
+description = "Gain 1 Energy. Draw 2."
+upgraded_description = "Gain 2 Energy. Draw 2."
+effects = Array[Dictionary]([{"type": "energy", "amount": 1}, {"type": "draw", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "energy", "amount": 2}, {"type": "draw", "amount": 2}])
+card_target = "none"

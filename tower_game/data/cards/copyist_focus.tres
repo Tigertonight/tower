@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "copyist_focus"
+display_name = "Copyist Focus"
+card_type = "skill"
+rarity = "common"
+cost = 1
+description = "Gain 1 Strength. Exhaust."
+upgraded_description = "Gain 2 Strength. Exhaust."
+effects = Array[Dictionary]([{"type": "strength", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "strength", "amount": 2}])
+exhaust_on_play = true
+card_target = "self"

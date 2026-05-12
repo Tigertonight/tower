@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "final_oath"
+display_name = "Final Oath"
+card_type = "power"
+rarity = "rare"
+cost = 2
+description = "Gain 2 Max HP. Gain 2 Strength. Exhaust."
+upgraded_description = "Gain 3 Max HP. Gain 3 Strength. Exhaust."
+effects = Array[Dictionary]([{"type": "max_hp", "amount": 2}, {"type": "strength", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "max_hp", "amount": 3}, {"type": "strength", "amount": 3}])
+exhaust_on_play = true
+card_target = "self"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PotionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/potions/potion_data.gd" id="1_potion_data"]
+
+[resource]
+script = ExtResource("1_potion_data")
+id = "guard_draught"
+display_name = "Guard Draught"
+rarity = "common"
+description = "Gain 12 block."
+effects = Array[Dictionary]([{
+"type": "block",
+"amount": 12
+}])

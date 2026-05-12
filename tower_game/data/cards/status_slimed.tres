@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "status_slimed"
+display_name = "Slimed"
+card_type = "status"
+rarity = "special"
+cost = 1
+description = "Exhaust."
+upgraded_description = "Exhaust."
+effects = Array[Dictionary]([])
+upgraded_effects = Array[Dictionary]([])
+exhaust_on_play = true
+card_target = "none"

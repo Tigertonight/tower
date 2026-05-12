@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "curse_regret"
+display_name = "Regret"
+card_type = "curse"
+rarity = "special"
+cost = -1
+description = "Unplayable. At end of turn, lose 1 HP per card in hand."
+upgraded_description = "Unplayable. At end of turn, lose 1 HP per card in hand."
+effects = Array[Dictionary]([])
+upgraded_effects = Array[Dictionary]([])
+unplayable = true
+end_of_turn_effects = Array[Dictionary]([{"type": "lose_hp", "amount": 1}])
+card_target = "none"

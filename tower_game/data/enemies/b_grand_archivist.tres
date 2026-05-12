@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "b_grand_archivist"
+display_name = "The Grand Archivist"
+tier = "boss"
+max_hp = 250
+art_path = "res://art/generated/sprites/grand_archivist.png"
+move_pool = Array[Dictionary]([{"move_id": "mv_dispatch", "weight": 3, "max_in_row": 2}, {"move_id": "mv_seal_block", "weight": 2, "max_in_row": 1}, {"move_id": "mv_kindle", "weight": 2, "max_in_row": 2}, {"move_id": "mv_marginal_note", "weight": 1, "max_in_row": 1}])
+opener_move_ids = Array[String](["mv_kindle"])
+phase_hp_below_pct = 0.4
+phase_enter_effects = Array[Dictionary]([{"type": "strength", "amount": 6}, {"type": "block", "amount": 20}])
+phase_move_pool = Array[Dictionary]([{"move_id": "mv_anathema", "weight": 2, "max_in_row": 1}, {"move_id": "mv_excommunicate", "weight": 3, "max_in_row": 1}, {"move_id": "mv_archival_decree", "weight": 2, "max_in_row": 1}, {"move_id": "mv_heavy_stamp", "weight": 1, "max_in_row": 1}])

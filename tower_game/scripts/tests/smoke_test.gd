@@ -18,7 +18,14 @@ const CARDS := [
 	"res://data/cards/brace.tres",
 	"res://data/cards/shield_tap.tres",
 	"res://data/cards/break_rhythm.tres",
-	"res://data/cards/oath_pressure.tres"
+	"res://data/cards/oath_pressure.tres",
+	"res://data/cards/curse_burn.tres",
+	"res://data/cards/curse_doubt.tres",
+	"res://data/cards/curse_regret.tres",
+	"res://data/cards/curse_wound.tres",
+	"res://data/cards/status_dazed.tres",
+	"res://data/cards/status_slimed.tres",
+	"res://data/cards/status_void.tres"
 ]
 
 const RELICS := [

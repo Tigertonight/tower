@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "folded_corner"
+display_name = "Folded Corner"
+card_type = "skill"
+rarity = "common"
+cost = 1
+description = "Gain 8 Block. Draw 1."
+upgraded_description = "Gain 11 Block. Draw 1."
+effects = Array[Dictionary]([{"type": "block", "amount": 8}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 11}, {"type": "draw", "amount": 1}])
+card_target = "self"

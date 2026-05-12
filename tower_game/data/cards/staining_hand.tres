@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "staining_hand"
+display_name = "Staining Hand"
+card_type = "skill"
+rarity = "common"
+cost = 0
+description = "Apply 3 Ink."
+upgraded_description = "Apply 5 Ink."
+effects = Array[Dictionary]([{
+"type": "status",
+"status": "ink",
+"amount": 3
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "status",
+"status": "ink",
+"amount": 5
+}])

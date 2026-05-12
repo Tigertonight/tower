@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "wax_amulet"
+display_name = "Wax Amulet"
+rarity = "rare"
+description = "The first time your HP drops below 30% in a combat, heal 12 HP."
+trigger = "hp_threshold"
+effects = Array[Dictionary]([{"type": "heal_player", "amount": 12}])
+trigger_params = {"hp_below_pct": 0.3}

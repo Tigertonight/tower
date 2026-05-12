@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+[resource]
+script = ExtResource("1_relic_data")
+id = "quiet_eraser"
+display_name = "Quiet Eraser"
+rarity = "rare"
+description = "At combat start, apply 2 Weak."
+trigger = "combat_start"
+effects = Array[Dictionary]([{"type": "status", "target": "enemy", "status": "weak", "amount": 2}])

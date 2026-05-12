@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "binding_thread"
+display_name = "Binding Thread"
+rarity = "uncommon"
+description = "At the start of each combat, gain 6 Block and apply 1 Weak."
+trigger = "combat_start"
+effects = Array[Dictionary]([{"type": "block", "amount": 6}, {"type": "status", "status": "weak", "amount": 1, "target": "enemy"}])

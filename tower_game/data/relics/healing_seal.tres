@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "healing_seal"
+display_name = "Healing Seal"
+rarity = "rare"
+description = "At the end of each combat, heal 10 HP."
+trigger = "combat_victory"
+effects = Array[Dictionary]([{"type": "heal_player", "amount": 10}])

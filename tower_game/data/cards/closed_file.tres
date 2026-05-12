@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "closed_file"
+display_name = "Closed File"
+card_type = "skill"
+rarity = "common"
+cost = 1
+description = "Gain 7 block."
+upgraded_description = "Gain 10 block."
+effects = Array[Dictionary]([{"type": "block", "amount": 7}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 10}])

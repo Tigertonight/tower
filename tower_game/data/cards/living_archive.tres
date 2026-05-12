@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "living_archive"
+display_name = "Living Archive"
+card_type = "power"
+rarity = "rare"
+cost = 2
+description = "Gain 3 Strength. Gain 3 Dexterity."
+upgraded_description = "Gain 4 Strength. Gain 4 Dexterity."
+effects = Array[Dictionary]([{"type": "strength", "amount": 3}, {"type": "dexterity", "amount": 3}])
+upgraded_effects = Array[Dictionary]([{"type": "strength", "amount": 4}, {"type": "dexterity", "amount": 4}])
+card_target = "self"

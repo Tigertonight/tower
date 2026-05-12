@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "last_word"
+display_name = "Last Word"
+card_type = "attack"
+rarity = "rare"
+cost = 2
+description = "Deal 18 damage. Gain 1 strength."
+upgraded_description = "Deal 24 damage. Gain 1 strength."
+effects = Array[Dictionary]([{"type": "damage", "amount": 18}, {"type": "strength", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 24}, {"type": "strength", "amount": 1}])

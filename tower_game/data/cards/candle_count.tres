@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "candle_count"
+display_name = "Candle Count"
+card_type = "skill"
+rarity = "uncommon"
+cost = 0
+description = "Gain 2 block. Draw 1 card."
+upgraded_description = "Gain 4 block. Draw 1 card."
+effects = Array[Dictionary]([{"type": "block", "amount": 2}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 4}, {"type": "draw", "amount": 1}])

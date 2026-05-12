@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "last_stand_oath"
+display_name = "Last Stand Oath"
+rarity = "rare"
+description = "The first time your HP drops below 50% in a combat, gain 3 Strength."
+trigger = "hp_threshold"
+effects = Array[Dictionary]([{"type": "strength", "amount": 3}])
+trigger_params = {"hp_below_pct": 0.5}

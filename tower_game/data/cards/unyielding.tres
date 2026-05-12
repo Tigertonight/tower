@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "unyielding"
+display_name = "Unyielding"
+card_type = "power"
+rarity = "rare"
+cost = 2
+description = "Gain 4 Strength."
+upgraded_description = "Gain 6 Strength."
+effects = Array[Dictionary]([{"type": "strength", "amount": 4}])
+upgraded_effects = Array[Dictionary]([{"type": "strength", "amount": 6}])
+card_target = "self"

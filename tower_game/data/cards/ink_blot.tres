@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "ink_blot"
+display_name = "Ink Blot"
+card_type = "attack"
+rarity = "common"
+cost = 1
+description = "Deal 5 damage. Apply 2 Ink."
+upgraded_description = "Deal 6 damage. Apply 3 Ink."
+effects = Array[Dictionary]([{
+"type": "damage",
+"amount": 5
+}, {
+"type": "status",
+"status": "ink",
+"amount": 2
+}])
+upgraded_effects = Array[Dictionary]([{
+"type": "damage",
+"amount": 6
+}, {
+"type": "status",
+"status": "ink",
+"amount": 3
+}])

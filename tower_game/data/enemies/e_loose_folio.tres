@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "e_loose_folio"
+display_name = "Loose Folio"
+tier = "normal"
+max_hp = 30
+art_path = "res://art/generated/sprites/loose_folio.png"
+move_pool = Array[Dictionary]([{
+"move_id": "mv_flutter",
+"weight": 4,
+"max_in_row": 1
+}, {
+"move_id": "mv_gather",
+"weight": 2,
+"max_in_row": 1
+}, {
+"move_id": "mv_slap",
+"weight": 3,
+"max_in_row": 2
+}])

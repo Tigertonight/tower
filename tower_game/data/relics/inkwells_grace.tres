@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "inkwells_grace"
+display_name = "Inkwell's Grace"
+rarity = "uncommon"
+description = "Whenever an enemy dies with Ink on it, draw 2 cards."
+trigger = "enemy_killed"
+effects = Array[Dictionary]([{"type": "draw", "amount": 2}])
+trigger_params = {"require_had_ink": true}

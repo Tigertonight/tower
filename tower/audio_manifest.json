@@ -1,0 +1,48 @@
+{
+  "_": "Asset manifest for the Living Archive audio pass. Field meanings:",
+  "_fields": {
+    "id": "Asset id matching the AudioManager call site (without .ogg extension).",
+    "category": "music | sfx | ambience — picks the output subfolder under tower_game/audio/.",
+    "kind": "music_loop | ambient_loop | sfx_oneshot — used by generate_audio.sh to pick generation mode.",
+    "duration_s": "Target length in seconds. Music ≈ 60s loop, ambient ≈ 30s loop, sfx ≈ 0.3-1.5s.",
+    "prompt": "Plain-language prompt for the generator. Keep the audio direction from tower/20_audio_plan.md (paper, dust, stamps, glassy strings, dry breath; no melodic motifs)."
+  },
+  "version": "0.1.0",
+  "assets": [
+    { "id": "mus_main_theme",     "category": "music",    "kind": "music_loop",   "duration_s": 60, "prompt": "Slow, sparse, slightly melancholic title theme. Detuned bell pad, very low strings, distant page-rustle texture. No drums, no melody, just mood. Quiet bureaucratic-archive horror, contemplative. Loopable." },
+    { "id": "mus_map_theme",      "category": "music",    "kind": "music_loop",   "duration_s": 60, "prompt": "Quiet ambient bed for a map screen. Soft creaking wood, distant breath, low pad in minor. Less foreground than the title theme. Loopable." },
+    { "id": "mus_combat_normal",  "category": "music",    "kind": "music_loop",   "duration_s": 60, "prompt": "Tense combat loop. Detuned strings holding a low drone, brief glassy bell stabs, occasional paper-flutter texture. No drum kit; subtle pulse only. 90 BPM equivalent. Loopable." },
+    { "id": "mus_combat_elite",   "category": "music",    "kind": "music_loop",   "duration_s": 60, "prompt": "Elite combat loop. Heavier dread than mus_combat_normal: lower drone, sparse low brass, tight metallic stamps. No melody. Loopable." },
+    { "id": "mus_combat_boss",    "category": "music",    "kind": "music_loop",   "duration_s": 75, "prompt": "Boss combat loop. Slow processional with low bell tolls, distant choir whisper, thick paper texture. Threatening but not bombastic. Loopable, fits the Living Archive bureaucratic-horror tone." },
+    { "id": "mus_campfire",       "category": "music",    "kind": "music_loop",   "duration_s": 50, "prompt": "Campfire loop. Crackling wax candle ambience under a slow, warm low pad in minor. Felt-piano single notes far away, very sparse. Restful, sad. Loopable." },
+
+    { "id": "amb_archive_room",   "category": "ambience", "kind": "ambient_loop", "duration_s": 30, "prompt": "Sparse loop of an old archive room: distant page rustle, slow dust motes, far-off breath, very subtle wood creak. Mono. Loopable, no spike." },
+    { "id": "amb_burnt_stack",    "category": "ambience", "kind": "ambient_loop", "duration_s": 30, "prompt": "Loop of a burnt pile of paper: low ember crackle, slow ash settle, occasional ember pop. Mono. Loopable." },
+
+    { "id": "sfx_ui_run_start",   "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.6, "prompt": "Soft paper unrolling and a wax stamp thud. Final. Mono. Less than 1 second." },
+    { "id": "sfx_ui_button_click","category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.10, "prompt": "Short, dry stamp click on paper. Mono." },
+    { "id": "sfx_ui_hover_soft",  "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.08, "prompt": "Very low, soft paper-corner flick. Mono." },
+    { "id": "sfx_card_draw",      "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.20, "prompt": "Dry paper card sliding off a deck. Mono." },
+    { "id": "sfx_card_shuffle",   "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.55, "prompt": "Riffle of a paper deck shuffling, slightly muffled, dusty." },
+    { "id": "sfx_card_play_attack","category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.30, "prompt": "Sharp paper slam onto a desk with a hint of metal scrape. Mono." },
+    { "id": "sfx_card_play_skill","category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.30, "prompt": "Crisp paper flip with a soft chime. Mono." },
+    { "id": "sfx_card_play_power","category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.55, "prompt": "Slow ink-pour with a low bell tail. Mono. Slightly longer release than the other card-play cues." },
+    { "id": "sfx_combat_hit",     "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.18, "prompt": "Short impact: cloth-and-paper thud with a tiny metal ring. Mono. Under 0.2s." },
+    { "id": "sfx_combat_block",   "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.25, "prompt": "Soft thump of cloth wrapping paper, low and protective. Mono." },
+    { "id": "sfx_combat_status_neg","category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.30, "prompt": "Acidic ink hiss and a small dry crack. Mono." },
+    { "id": "sfx_combat_status_pos","category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.30, "prompt": "Soft glass shimmer and a held inhale. Mono." },
+    { "id": "sfx_turn_start",     "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.35, "prompt": "Page turn with a quiet bell tap. Mono." },
+    { "id": "sfx_turn_end",       "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.30, "prompt": "Wax stamp thud and a soft exhale. Mono." },
+    { "id": "sfx_enemy_intent",   "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.32, "prompt": "Short ominous intent cue: low thread hum with a small glass tick. Mono." },
+    { "id": "sfx_combat_victory", "category": "sfx", "kind": "sfx_oneshot", "duration_s": 1.20, "prompt": "Slow bell rise and a final wax stamp. Restful, archival, not triumphant brass. Mono." },
+    { "id": "sfx_combat_defeat",  "category": "sfx", "kind": "sfx_oneshot", "duration_s": 1.40, "prompt": "Low bell toll fading into paper dust. Mono. Quiet, mournful, no drums." },
+    { "id": "sfx_reward_appear",  "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.50, "prompt": "Three small chimes layered with a paper unfurl. Mono." },
+    { "id": "sfx_reward_pick",    "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.30, "prompt": "Pen scratch on parchment with a soft confirmation tone. Mono." },
+    { "id": "sfx_shop_enter",     "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.70, "prompt": "Quiet bell over a desk, with a paper file being unrolled. Mono." },
+    { "id": "sfx_shop_buy",       "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.45, "prompt": "Coins clinked onto wood, then a stamp. Mono." },
+    { "id": "sfx_campfire_rest",  "category": "sfx", "kind": "sfx_oneshot", "duration_s": 1.20, "prompt": "Wax candle sigh, slow exhale, restful. Mono." },
+    { "id": "sfx_campfire_upgrade","category": "sfx", "kind": "sfx_oneshot", "duration_s": 1.10, "prompt": "Whetstone on metal, single dry chime tail. Mono." },
+    { "id": "sfx_event_open",     "category": "sfx", "kind": "sfx_oneshot", "duration_s": 0.50, "prompt": "Wax seal cracking open and a single low bell tap. Mono." },
+    { "id": "sfx_boss_intro",     "category": "sfx", "kind": "sfx_oneshot", "duration_s": 1.80, "prompt": "Slow low bell toll plus distant breath, dust falling, ominous and quiet. Mono." }
+  ]
+}

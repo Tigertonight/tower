@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PotionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/potions/potion_data.gd" id="1_potion_data"]
+
+[resource]
+script = ExtResource("1_potion_data")
+id = "fairy_pages"
+display_name = "Fairy Pages"
+rarity = "rare"
+description = "Heal 20 HP. Gain 1 Strength. Gain 1 Dexterity."
+effects = Array[Dictionary]([{"type": "heal_player", "amount": 20}, {"type": "strength", "amount": 1}, {"type": "dexterity", "amount": 1}])

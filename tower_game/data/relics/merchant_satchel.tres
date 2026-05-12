@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "merchant_satchel"
+display_name = "Merchant Satchel"
+rarity = "uncommon"
+description = "At the end of each combat, gain 12 gold."
+trigger = "combat_victory"
+effects = Array[Dictionary]([{"type": "gold", "amount": 12}])

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "quiet_shelf"
+display_name = "Quiet Shelf"
+card_type = "skill"
+rarity = "uncommon"
+cost = 1
+description = "Gain 7 Block. Gain 1 Dexterity."
+upgraded_description = "Gain 9 Block. Gain 2 Dexterity."
+effects = Array[Dictionary]([{"type": "block", "amount": 7}, {"type": "dexterity", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 9}, {"type": "dexterity", "amount": 2}])
+card_target = "self"

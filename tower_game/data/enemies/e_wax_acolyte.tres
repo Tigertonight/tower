@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "e_wax_acolyte"
+display_name = "Wax Acolyte"
+tier = "normal"
+max_hp = 34
+art_path = "res://art/generated/sprites/wax_acolyte.png"
+move_pool = Array[Dictionary]([{
+"move_id": "mv_seal",
+"weight": 3,
+"max_in_row": 1
+}, {
+"move_id": "mv_imprint",
+"weight": 2,
+"max_in_row": 1
+}, {
+"move_id": "mv_stamp",
+"weight": 3,
+"max_in_row": 2
+}])

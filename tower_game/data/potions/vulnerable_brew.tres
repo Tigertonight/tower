@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PotionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/potions/potion_data.gd" id="1_potion_data"]
+
+[resource]
+script = ExtResource("1_potion_data")
+id = "vulnerable_brew"
+display_name = "Vulnerable Brew"
+rarity = "common"
+description = "Apply 3 Vulnerable."
+effects = Array[Dictionary]([{"type": "status", "status": "vulnerable", "amount": 3, "target": "enemy"}])

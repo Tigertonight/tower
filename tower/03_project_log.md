@@ -81,6 +81,36 @@ The initial gameplay research and high-level design plan have been written. The 
 - Reworked combat UI from VBox-driven layout to fixed 1280x720 deckbuilder screen zones: top HUD, centered turn banner, left player anchor, right enemy/intent anchor, bottom hand row, left energy/piles, and right End Turn button.
 - Reduced map task prompt to a compact left-aligned objective panel and fixed oversized story/completion art by ignoring source image dimensions.
 
+### 2026-05-11
+
+- Generated the remaining raster visual assets with Codex native `imagegen`: card illustrations, intent/status/map/relic icons, elite/prop/VFX sprites, card back, energy orb, and reward panel frame.
+- Sliced generated source sheets into project runtime PNGs under `tower_game/art/generated/cards`, `icons`, `sprites`, and `ui`.
+- Integrated generated card illustrations into `CardView`.
+- Integrated generated route-node icons into `RouteMapView`.
+- Integrated generated combat visuals: intent icons, status icons, energy orb, card-back pile icons, `index_knight.png` for elite combat, and generated slash/block/hit/focus VFX.
+- Integrated generated backgrounds and props into main menu, prologue, reward overlay, shop, event, campfire, and defeat screens.
+- Deferred Godot runtime verification until user approval.
+- Data-driven the enemy runtime from `15_enemy_boss_design.md`: added `EnemyData`, `EnemyMoveData`, an enemy catalog, 5 normal enemies, 2 elites, and the Sealed Curator boss move pools.
+- Replaced the old node-type enemy stat adjustment with encounter IDs, enemy resources, weighted move selection, opener moves, anti-repeat rules, boss phase data, and seeded combat RNG.
+- Implemented the MVP non-combat layer from `16_events_shop_campfire.md`: five archive events, shop offer pools, and campfire target-card upgrade choice.
+- Expanded MVP content counts to 30 cards, 10 relics, and 5 potions, and wired rarity-aware card rewards, gold rewards, potion drops, and relic drops.
+- Replaced the fixed route with seeded procedural map generation, explicit graph edges, node availability, visited state, root seed, RNG stream state, and v1 save fields for map/reward/event/combat progression.
+- Deferred Godot runtime verification until user approval.
+- Ran the first Godot runtime verification pass after approval: smoke, MVP data/map checks, scene instantiation checks, and manual UI flow checks for menu, map, combat, reward, and shop.
+- Fixed runtime issues found during testing: `MapGenerator` Variant inference, typed `EnemyMoveData` arrays, map shop/campfire adjacency repairs, oversized combat pile icons, missing card-art fallback warnings, and overflowing shop choice layout.
+- Added `runtime_mvp_check.gd` and `runtime_scene_check.gd` to cover content counts, enemy move references, map constraints, run scene boot, and all 8 encounter scene starts.
+
+### 2026-05-12 — Phase A1 push (toward gate G-A2)
+
+- A1.1 Multi-enemy combat: added `enemies: Array`, per-enemy panels with click-to-target, AoE effects (`damage_all_enemies`, `status_all_enemies`), per-target intent display, and multi-enemy encounter packs in `map_generator`.
+- A1.2 Tooltip & keyword inspector: added `KeywordCatalog` and a long-press / hover inspector on `CardView`.
+- A1.3 Archivist Ink/DoT: added `Ink` status decay-1/tick, 5 new Archivist cards (`ink_blot`, `staining_hand`, `spilled_inkwell`, `quill_strike`, `marginalia`, `dripping_seal`), `damage_per_target_ink` effect, `Inkwell's Grace` relic with `require_had_ink` trigger filter; `char_archivist.tres` starter deck rebuilt around Ink.
+- A1.6 Run summary screen: replaced `_show_defeat()` with `_show_run_summary()` covering both defeat and victory paths; surfaces deck composition, relic list, gold, floors cleared, and act reached.
+- A1.7 Pause menu & settings: ESC opens an overlay with master/music/sfx volume sliders, fast-resolve toggle, tutorial-hints toggle, Resume / Main Menu / Abandon Run. Persisted via new `SettingsManager` to `user://tower_settings.json`.
+- A1.8 First-battle tutorial hints: combat schedules four staggered toast tips on the very first combat (`combats_won == 0`); gated by the settings toggle and `fast_resolve`.
+- A1.9 Headless balance simulation pipeline: new `tower_game/scripts/tools/headless_runs.gd` runs N sims with a "play highest-cost playable → end turn" AI and writes per-run CSVs; `tower/run_balance_sim.sh` sweeps both characters × A0–A2 and `tower/aggregate_balance.py` prints a per-cell winrate table.
+- A1 final smoke test: static review only — Godot binary not available in this sandbox. All edited GDScripts pass naive paren/bracket balance checks; all referenced symbols (`_show_run_summary`, `_open_pause_menu`, `set_fast_resolve`, `set_tutorial_hints_enabled`, `damage_per_target_ink`, `require_had_ink`) resolve. User to run `godot --path tower_game --headless --script res://scripts/tools/headless_runs.gd -- --char=char_vanguard --asc=0 --runs=20` for a real smoke pass once Godot is on PATH.
+
 ## Active Tasks
 
 | Task | Owner | Status | Notes |
@@ -100,6 +130,12 @@ The initial gameplay research and high-level design plan have been written. The 
 | Add smoke test | Codex | Done | `scripts/tests/smoke_test.gd` validates scene/data loading. |
 | Add branching route decisions | Codex | Done | Each map layer now offers 1-3 selectable nodes. |
 | Add campfire upgrades | Codex | Done | Campfires can upgrade the first non-upgraded card in the deck. |
+| Generate remaining raster visual assets | Codex | Done | Codex native `imagegen` produced PNG card art, icons, props, VFX, and UI surfaces. |
+| Wire generated assets into UI | Codex | Done pending runtime review | Integrated into cards, route map, combat HUD/VFX, reward overlay, and non-combat screens. Godot visual verification pending user approval. |
+| Data-drive enemies | Codex | Done pending runtime review | Enemy/resources and move pools are implemented; Godot verification pending user approval. |
+| Complete MVP reward/content counts | Codex | Done pending runtime review | Project now has 30 cards, 10 relics, 5 potions, rarity/gold/potion/relic reward logic. |
+| Replace fixed map with seeded generation | Codex | Done pending runtime review | Run saves root seed, RNG state, current node, visited nodes, deck, relics, potions, and history. |
+| Runtime verification pass 1 | Codex | Done | Smoke, data/map checks, scene checks, and manual UI pass completed; remaining deeper QA is full-run, 1600x900, and save-edge cases. |
 
 ## Risks
 
@@ -117,6 +153,7 @@ The initial gameplay research and high-level design plan have been written. The 
 1. Choose original theme and project name.
 2. Complete technical design details.
 3. Define MVP scope.
-4. Add generated/handmade placeholder art for character, enemies, cards, relics, and map nodes.
-5. Replace authored branch map with seeded procedural generation.
-6. Add richer combat animation timing, card targeting previews, and card/relic inspection overlays.
+4. Runtime-review the integrated visual asset pass in Godot.
+5. Runtime-review the data-driven enemy, non-combat, reward, and seeded-map pass in Godot.
+6. Add richer combat animation timing, card targeting previews, and card/relic/potion inspection overlays.
+7. Add automated map/reward smoke checks after runtime verification.

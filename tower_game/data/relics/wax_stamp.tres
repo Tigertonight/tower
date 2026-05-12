@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+[resource]
+script = ExtResource("1_relic_data")
+id = "wax_stamp"
+display_name = "Wax Stamp"
+rarity = "uncommon"
+description = "At combat start, gain 8 block."
+trigger = "combat_start"
+effects = Array[Dictionary]([{"type": "block", "amount": 8}])

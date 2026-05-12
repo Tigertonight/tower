@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "twin_dot"
+display_name = "Twin Dot"
+card_type = "attack"
+rarity = "common"
+cost = 1
+description = "Deal 4 damage twice."
+upgraded_description = "Deal 5 damage twice."
+effects = Array[Dictionary]([{"type": "damage", "amount": 4}, {"type": "damage", "amount": 4}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 5}, {"type": "damage", "amount": 5}])

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "warm_kettle"
+display_name = "Warm Kettle"
+rarity = "common"
+description = "At the end of each combat, heal 3 HP."
+trigger = "combat_victory"
+effects = Array[Dictionary]([{"type": "heal_player", "amount": 3}])

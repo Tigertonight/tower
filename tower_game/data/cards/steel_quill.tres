@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "steel_quill"
+display_name = "Steel Quill"
+card_type = "skill"
+rarity = "rare"
+cost = 1
+description = "Heal 7 HP. Gain 6 Block. Exhaust."
+upgraded_description = "Heal 10 HP. Gain 9 Block. Exhaust."
+effects = Array[Dictionary]([{"type": "heal_player", "amount": 7}, {"type": "block", "amount": 6}])
+upgraded_effects = Array[Dictionary]([{"type": "heal_player", "amount": 10}, {"type": "block", "amount": 9}])
+exhaust_on_play = true
+card_target = "self"

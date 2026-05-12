@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PotionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/potions/potion_data.gd" id="1_potion_data"]
+
+[resource]
+script = ExtResource("1_potion_data")
+id = "explosive_potion"
+display_name = "Explosive Potion"
+rarity = "uncommon"
+description = "Deal 10 damage and apply 2 Vulnerable."
+effects = Array[Dictionary]([{"type": "damage", "amount": 10, "target": "enemy"}, {"type": "status", "status": "vulnerable", "amount": 2, "target": "enemy"}])

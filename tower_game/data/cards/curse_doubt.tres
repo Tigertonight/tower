@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "curse_doubt"
+display_name = "Doubt"
+card_type = "curse"
+rarity = "special"
+cost = -1
+description = "Unplayable. At end of turn, gain 1 Weak."
+upgraded_description = "Unplayable. At end of turn, gain 1 Weak."
+effects = Array[Dictionary]([])
+upgraded_effects = Array[Dictionary]([])
+unplayable = true
+end_of_turn_effects = Array[Dictionary]([{"type": "self_status", "status": "weak", "amount": 1}])
+card_target = "none"

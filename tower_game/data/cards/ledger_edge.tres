@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "ledger_edge"
+display_name = "Ledger Edge"
+card_type = "attack"
+rarity = "common"
+cost = 2
+description = "Deal 14 damage."
+upgraded_description = "Deal 18 damage."
+effects = Array[Dictionary]([{"type": "damage", "amount": 14}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 18}])

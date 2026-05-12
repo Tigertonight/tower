@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+
+[resource]
+script = ExtResource("1_card_data")
+id = "vow_of_silence"
+display_name = "Vow of Silence"
+card_type = "skill"
+rarity = "uncommon"
+cost = 0
+description = "Apply 2 Weak. Apply 1 Vulnerable."
+upgraded_description = "Apply 3 Weak. Apply 2 Vulnerable."
+effects = Array[Dictionary]([{"type": "status", "status": "weak", "amount": 2, "target": "enemy"}, {"type": "status", "status": "vulnerable", "amount": 1, "target": "enemy"}])
+upgraded_effects = Array[Dictionary]([{"type": "status", "status": "weak", "amount": 3, "target": "enemy"}, {"type": "status", "status": "vulnerable", "amount": 2, "target": "enemy"}])
