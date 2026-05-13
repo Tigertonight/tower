@@ -697,10 +697,10 @@ func _show_character_select_menu() -> void:
 	var root := VBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.offset_left = 34
-	root.offset_top = 22
+	root.offset_top = 14
 	root.offset_right = -34
-	root.offset_bottom = -24
-	root.add_theme_constant_override("separation", 14)
+	root.offset_bottom = -12
+	root.add_theme_constant_override("separation", 8)
 	screen.add_child(root)
 
 	var header := HBoxContainer.new()
@@ -714,12 +714,12 @@ func _show_character_select_menu() -> void:
 
 	var title := Label.new()
 	title.text = _tr("select.title", "Choose Your Archivist")
-	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_font_size_override("font_size", 25)
 	title_box.add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = _tr("select.subtitle", "Select a character, review the starting kit, then set Ascension before entering the archive.")
-	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.add_theme_font_size_override("font_size", 13)
 	subtitle.modulate = Color(0.84, 0.78, 0.68, 0.92)
 	title_box.add_child(subtitle)
 
@@ -740,12 +740,14 @@ func _show_character_select_menu() -> void:
 	roster_panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.034, 0.030, 0.026, 0.72), Color(0.72, 0.52, 0.24, 0.66)))
 	body.add_child(roster_panel)
 
-	var roster := HBoxContainer.new()
-	roster.alignment = BoxContainer.ALIGNMENT_CENTER
+	var roster := GridContainer.new()
+	roster.columns = 2
 	roster.add_theme_constant_override("separation", 16)
+	roster.add_theme_constant_override("h_separation", 16)
+	roster.add_theme_constant_override("v_separation", 16)
 	roster_panel.add_child(roster)
 
-	var sorted_char_ids: Array = character_catalog.keys()
+	var sorted_char_ids: Array = _playable_character_ids()
 	sorted_char_ids.sort()
 	if sorted_char_ids.is_empty():
 		sorted_char_ids = ["char_vanguard"]
@@ -758,9 +760,15 @@ func _show_character_select_menu() -> void:
 	details_panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.026, 0.027, 0.027, 0.82), Color(0.64, 0.48, 0.24, 0.70)))
 	body.add_child(details_panel)
 
+	var detail_scroll := ScrollContainer.new()
+	detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	details_panel.add_child(detail_scroll)
+
 	var detail := VBoxContainer.new()
+	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail.add_theme_constant_override("separation", 12)
-	details_panel.add_child(detail)
+	detail_scroll.add_child(detail)
 
 	var data = CharacterCatalogScript.resolve(character_catalog, selected_character_id)
 	var name_text := selected_character_id
@@ -769,6 +777,8 @@ func _show_character_select_menu() -> void:
 	var relic_id := "sealed_badge"
 	if data != null:
 		name_text = _localized_name(String(data.id), String(data.display_name))
+		if String(data.get("class_display_name")) != "":
+			name_text = "%s — %s" % [_character_class_display_name(data), name_text]
 		subtitle_text = _tr("char.%s.subtitle" % String(data.id), String(data.subtitle))
 		starting_hp = int(data.starting_hp)
 		relic_id = String(data.starting_relic_id)
@@ -872,7 +882,7 @@ func _show_character_select_menu() -> void:
 
 	var start := Button.new()
 	start.text = _tr("select.start", "Enter the Archive")
-	start.custom_minimum_size = Vector2(220, 52)
+	start.custom_minimum_size = Vector2(220, 46)
 	start.add_theme_font_size_override("font_size", 18)
 	start.pressed.connect(_on_new_run_confirmed)
 	footer.add_child(start)
@@ -887,9 +897,11 @@ func _build_character_portrait_card(char_id: String) -> Control:
 	if data != null:
 		color = data.theme_color
 		display_name = _localized_name(String(data.id), String(data.display_name))
+		if String(data.get("class_display_name")) != "":
+			display_name = "%s" % _character_class_display_name(data)
 		subtitle = _tr("char.%s.subtitle" % String(data.id), String(data.subtitle))
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(230, 500)
+	button.custom_minimum_size = Vector2(210, 212)
 	button.text = ""
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.050, 0.044, 0.036, 0.66), color.darkened(0.26)))
@@ -914,7 +926,7 @@ func _build_character_portrait_card(char_id: String) -> Control:
 
 	var art := TextureRect.new()
 	art.texture = _character_sprite_texture(char_id)
-	art.custom_minimum_size = Vector2(0, 320)
+	art.custom_minimum_size = Vector2(0, 136)
 	art.ignore_texture_size = true
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -927,15 +939,6 @@ func _build_character_portrait_card(char_id: String) -> Control:
 	name.add_theme_font_size_override("font_size", 20)
 	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(name)
-
-	var sub := Label.new()
-	sub.text = subtitle
-	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub.add_theme_font_size_override("font_size", 12)
-	sub.modulate = Color(0.84, 0.80, 0.72, 0.94)
-	sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(sub)
 
 	var tag := Label.new()
 	tag.text = _tr("select.selected", "SELECTED") if selected else _tr("select.available", "AVAILABLE")
@@ -986,6 +989,17 @@ func _starter_deck_preview(char_id: String) -> String:
 	return ", ".join(parts)
 
 
+func _playable_character_ids() -> Array:
+	var ids: Array = []
+	for char_id in character_catalog.keys():
+		var data = character_catalog.get(char_id, null)
+		if data == null:
+			continue
+		if bool(data.get("is_playable")):
+			ids.append(String(char_id))
+	return ids
+
+
 func _relic_display_name(relic_id: String) -> String:
 	var data = relic_database.get(relic_id, null)
 	if data != null and String(data.get("display_name")) != "":
@@ -994,6 +1008,19 @@ func _relic_display_name(relic_id: String) -> String:
 
 
 func _character_trait_text(char_id: String) -> String:
+	var data = CharacterCatalogScript.resolve(character_catalog, char_id)
+	if data != null and String(data.get("class_trait_summary")) != "":
+		var localized := _tr("char.%s.traits" % String(data.id), "")
+		if localized != "":
+			return localized
+		var keywords = data.get("class_keywords")
+		var keyword_text := ""
+		if keywords != null and not keywords.is_empty():
+			var parts: Array[String] = []
+			for entry in keywords:
+				parts.append(String(entry))
+			keyword_text = "\n%s: %s" % [_tr("select.keywords", "Keywords"), ", ".join(parts)]
+		return "%s%s" % [String(data.get("class_trait_summary")), keyword_text]
 	match char_id:
 		"char_vanguard":
 			return _tr("char.char_vanguard.traits", "Role: front-line brawler.\nStrengths: high HP, reliable block, simple attack curve.\nPressure: slower card flow, needs damage upgrades before elites.")
@@ -1001,6 +1028,16 @@ func _character_trait_text(char_id: String) -> String:
 			return _tr("char.char_archivist.traits", "Role: status and draw specialist.\nStrengths: cheaper card flow, Ink pressure, more tactical turns.\nPressure: lower HP, weaker early blocking if draw misses.")
 		_:
 			return "Role: unknown archive claimant.\nStrengths and pressure will be defined as this character receives tuning."
+
+
+func _character_class_display_name(data) -> String:
+	if data == null:
+		return ""
+	var class_id := String(data.get("class_id"))
+	var fallback := String(data.get("class_display_name"))
+	if class_id == "":
+		return fallback
+	return _tr("class.%s" % class_id, fallback)
 
 
 func _show_story_intro() -> void:
@@ -1194,7 +1231,7 @@ func _show_combat(node_type: String, node_title: String = "", encounter_id: Stri
 	_clear_screen()
 	var combat = COMBAT_SCENE.instantiate()
 	combat.set_meta("screen_kind", "combat")
-	combat.configure(run_deck_ids, player_hp, player_max_hp, node_type, combat_index, node_title, encounter_id, int(rng_state.get("combat_rng", run_seed + 11)), relic_ids, ascension_level)
+	combat.configure(run_deck_ids, player_hp, player_max_hp, node_type, combat_index, node_title, encounter_id, int(rng_state.get("combat_rng", run_seed + 11)), relic_ids, ascension_level, character_id, _current_character_pool_id())
 	current_screen = combat
 	add_child(combat)
 	combat.combat_reward_chosen.connect(_on_combat_reward_chosen)
@@ -1283,16 +1320,71 @@ func _roll_post_combat_rewards() -> void:
 
 
 func _gain_random_relic() -> void:
-	var candidates: Array[String] = []
-	for relic_id in relic_database.keys():
-		if String(relic_id) == "sealed_badge" or relic_ids.has(String(relic_id)):
-			continue
-		candidates.append(String(relic_id))
+	var source_pool := _roll_relic_source_pool(false)
+	_gain_random_relic_from_pool(source_pool)
+
+
+func _gain_random_relic_from_pool(source_pool: String) -> void:
+	var candidates := _relic_candidates(source_pool)
+	if candidates.is_empty() and source_pool != "":
+		candidates = _relic_candidates("")
 	if candidates.is_empty():
 		gold += 25
 		return
 	var relic_id := candidates[reward_rng.randi_range(0, candidates.size() - 1)]
 	relic_ids.append(relic_id)
+
+
+func _relic_candidates(source_pool: String = "") -> Array[String]:
+	var candidates: Array[String] = []
+	for relic_id in relic_database.keys():
+		if _is_relic_available(String(relic_id), source_pool):
+			candidates.append(String(relic_id))
+	return candidates
+
+
+func _is_relic_available(relic_id: String, source_pool: String = "") -> bool:
+	if not relic_database.has(relic_id):
+		return false
+	if relic_ids.has(relic_id):
+		return false
+	var relic = relic_database[relic_id]
+	if String(relic.rarity) == "starter":
+		return false
+	var pool_id := _relic_pool_id(relic)
+	if source_pool != "" and pool_id != source_pool:
+		return false
+	return pool_id == "public" or pool_id == _current_character_class_id()
+
+
+func _relic_pool_id(relic) -> String:
+	var pool_id := String(relic.get("pool_id"))
+	if pool_id == "":
+		return "public"
+	return pool_id
+
+
+func _current_character_class_id() -> String:
+	var data = CharacterCatalogScript.resolve(character_catalog, character_id if character_id != "" else selected_character_id)
+	if data != null:
+		var class_id := String(data.get("class_id"))
+		if class_id != "":
+			return class_id
+	return _current_character_pool_id()
+
+
+func _roll_relic_source_pool(for_shop: bool = false) -> String:
+	var class_pool := _current_character_class_id()
+	var roll := reward_rng.randi_range(1, 100)
+	if for_shop:
+		if roll <= 60:
+			return "public"
+		if roll <= 95:
+			return class_pool
+		return "public"
+	if roll <= 70:
+		return "public"
+	return class_pool
 
 
 func _gain_random_potion() -> void:
@@ -1373,7 +1465,7 @@ func _show_event() -> void:
 				_tr("event.transform_lantern.body", "A lantern with green wax flame. Watch the flame long enough and a card you carry rewrites itself."),
 				[
 					{"text": _tr("event.transform_lantern.choice1", "Stare into the flame. Transform a card."), "action": func() -> void: _event_transform_card()},
-					{"text": _tr("event.transform_lantern.choice2", "Pay 60 gold. Transform a card and gain 20 gold next combat."), "action": func() -> void: _event_transform_card_for_gold(60)},
+					{"text": _tr("event.transform_lantern.choice2", "Pay 40 gold. Transform a card."), "action": func() -> void: _event_transform_card_for_gold(40)},
 					{"text": _tr("event.transform_lantern.choice3", "Walk past."), "action": func() -> void: _advance_after_noncombat()}
 				]
 			)
@@ -1417,6 +1509,46 @@ func _show_event() -> void:
 					{"text": _tr("event.burned_archive.choice3", "Seal the door."), "action": func() -> void: _advance_after_noncombat()}
 				]
 			)
+		"ev_broken_standard":
+			_show_choice_screen(
+				_tr("event.broken_standard.title", "The Broken Standard"),
+				_tr("event.broken_standard.body", "A snapped field standard leans against the shelf. Its cloth still remembers a line that refused to break."),
+				[
+					{"text": _tr("event.broken_standard.choice1", "Raise it. Lose 5 HP. Gain a Warrior relic."), "action": func() -> void: _event_gain_class_relic_for_hp(5)},
+					{"text": _tr("event.broken_standard.choice2", "Drill the line. Gain Guarded Cut."), "action": func() -> void: _event_gain_specific_card("guarded_cut")},
+					{"text": _tr("event.broken_standard.choice3", "Fold it carefully."), "action": func() -> void: _advance_after_noncombat()}
+				]
+			)
+		"ev_unpaid_contract":
+			_show_choice_screen(
+				_tr("event.unpaid_contract.title", "The Unpaid Contract"),
+				_tr("event.unpaid_contract.body", "A black-wax contract opens to a blank signature line. The ink moves before the pen touches it."),
+				[
+					{"text": _tr("event.unpaid_contract.choice1", "Sign in black ink. Lose 6 HP. Gain a Warlock relic."), "action": func() -> void: _event_gain_class_relic_for_hp(6)},
+					{"text": _tr("event.unpaid_contract.choice2", "Copy the clause. Gain Index Mark and 25 gold."), "action": func() -> void: _event_gain_card_and_gold("index_mark", 25)},
+					{"text": _tr("event.unpaid_contract.choice3", "Leave it unsigned."), "action": func() -> void: _advance_after_noncombat()}
+				]
+			)
+		"ev_core_orrery":
+			_show_choice_screen(
+				_tr("event.core_orrery.title", "The Core Orrery"),
+				_tr("event.core_orrery.body", "A small brass orrery turns without a hand. Its blue core waits for a theorem worth burning."),
+				[
+					{"text": _tr("event.core_orrery.choice1", "Tune the core. Lose 5 HP. Gain a Mage relic."), "action": func() -> void: _event_gain_class_relic_for_hp(5)},
+					{"text": _tr("event.core_orrery.choice2", "Copy the orbit. Gain Core Spark and 20 gold."), "action": func() -> void: _event_gain_card_and_gold("core_spark", 20)},
+					{"text": _tr("event.core_orrery.choice3", "Let it keep turning."), "action": func() -> void: _advance_after_noncombat()}
+				]
+			)
+		"ev_silent_margin":
+			_show_choice_screen(
+				_tr("event.silent_margin.title", "The Silent Margin"),
+				_tr("event.silent_margin.body", "A margin opens where no page should have one. Something inside offers a knife without a handle."),
+				[
+					{"text": _tr("event.silent_margin.choice1", "Reach in. Lose 5 HP. Gain an Assassin relic."), "action": func() -> void: _event_gain_class_relic_for_hp(5)},
+					{"text": _tr("event.silent_margin.choice2", "Take the route. Gain Smoke Step and 20 gold."), "action": func() -> void: _event_gain_card_and_gold("smoke_step", 20)},
+					{"text": _tr("event.silent_margin.choice3", "Close the margin."), "action": func() -> void: _advance_after_noncombat()}
+				]
+			)
 		_:
 			_show_choice_screen(
 				_tr("event.loose_page.title", "A Loose Page"),
@@ -1443,16 +1575,17 @@ func _roll_event_id() -> String:
 		2: ["ev_transform_lantern", "ev_dust_oracle", "ev_weighing_scales"],
 		3: ["ev_burned_archive", "ev_dust_oracle", "ev_weighing_scales"]
 	}
-	# Character-specific extras. Each character can flavour the run with a
-	# small handful of bespoke event ids. Vanguard sticks to the shared pool;
-	# the Archivist gets a few archive-flavoured options.
-	var char_pools := {
-		"char_vanguard": [],
-		"char_archivist": ["ev_revision_desk", "ev_dust_oracle"]
+	# Class-specific extras keep event texture aligned with the selected
+	# archetype while still sharing the act/common backbone.
+	var class_pools := {
+		"warrior": ["ev_broken_standard"],
+		"warlock": ["ev_unpaid_contract", "ev_revision_desk", "ev_dust_oracle"],
+		"mage": ["ev_core_orrery"],
+		"assassin": ["ev_silent_margin"]
 	}
 	var pool: Array = common_pool.duplicate()
 	pool.append_array(act_pools.get(current_act, common_pool))
-	pool.append_array(char_pools.get(character_id, []))
+	pool.append_array(class_pools.get(_current_character_class_id(), []))
 	var candidates: Array[String] = []
 	for event_id in pool:
 		if not events_seen.has(event_id):
@@ -1474,12 +1607,31 @@ func _event_gain_relic_for_hp(cost: int) -> void:
 	_advance_after_noncombat()
 
 
+func _event_gain_class_relic_for_hp(cost: int) -> void:
+	player_hp = max(1, player_hp - cost)
+	_gain_random_relic_from_pool(_current_character_class_id())
+	_advance_after_noncombat()
+
+
+func _event_gain_specific_card(card_id: String) -> void:
+	if card_database.has(card_id):
+		run_deck_ids.append(card_id)
+	_advance_after_noncombat()
+
+
+func _event_gain_card_and_gold(card_id: String, amount: int) -> void:
+	if card_database.has(card_id):
+		run_deck_ids.append(card_id)
+	gold += amount
+	_advance_after_noncombat()
+
+
 func _event_remove_card_for_gold(price: int) -> void:
 	if gold >= price and run_deck_ids.size() > 8:
 		gold -= price
 		_show_card_picker_for_remove(_tr("picker.remove_strike.title", "Remove a Strike Form"), _tr("picker.remove_strike.hint", "Choose the copy to remove from this run."), true, price)
 	else:
-		_advance_after_noncombat()
+		_show_unavailable_event_choice(_tr("event.unavailable.remove", "Need enough gold and a deck larger than 8 cards."))
 
 
 func _event_buy_random_card(price: int) -> void:
@@ -1505,7 +1657,7 @@ func _event_upgrade_for_gold(price: int) -> void:
 		gold -= price
 		_show_card_picker_for_upgrade(_tr("picker.upgrade.title", "Upgrade a card"), _tr("picker.upgrade.hint", "Choose an unupgraded card to improve."), true, price, 0)
 	else:
-		_advance_after_noncombat()
+		_show_unavailable_event_choice(_tr("event.unavailable.gold", "You do not have enough gold."))
 
 
 func _event_upgrade_for_hp(cost: int) -> void:
@@ -1522,10 +1674,9 @@ func _event_transform_card() -> void:
 
 func _event_transform_card_for_gold(price: int) -> void:
 	if gold < price or not _has_transform_target():
-		_advance_after_noncombat()
+		_show_unavailable_event_choice(_tr("event.unavailable.transform", "Need enough gold and a non-basic card that can be transformed."))
 		return
-	gold -= price + 0
-	gold += 20
+	gold -= price
 	_show_card_picker_for_transform(_tr("picker.transform.title", "Transform a card"), _tr("picker.transform_green.hint", "Choose a card to rewrite under green wax flame."), true)
 
 
@@ -1542,7 +1693,7 @@ func _event_gain_potion() -> void:
 
 func _event_remove_any_card_for_heal(heal_amount: int) -> void:
 	if run_deck_ids.size() <= 8:
-		_advance_after_noncombat()
+		_show_unavailable_event_choice(_tr("event.unavailable.deck", "Your deck is too small to offer a card."))
 		return
 	pending_card_pick_context = {"action": "remove_any", "return_to_map": true, "refund_gold": 0, "refund_hp": 0, "post_heal": heal_amount}
 	_show_run_deck_picker(_tr("picker.offer.title", "Offer a card"), _tr("picker.offer.hint", "Remove one card from this run."), Callable(self, "_is_remove_any_pickable"))
@@ -1559,6 +1710,9 @@ func _event_buy_max_hp(price: int, amount: int) -> void:
 		gold -= price
 		player_max_hp += amount
 		player_hp = min(player_max_hp, player_hp + amount)
+	else:
+		_show_unavailable_event_choice(_tr("event.unavailable.gold", "You do not have enough gold."))
+		return
 	_advance_after_noncombat()
 
 
@@ -1570,10 +1724,18 @@ func _event_buy_random_card_for_hp(hp_cost: int) -> void:
 
 func _event_loose_page_speak() -> void:
 	if event_rng.randi_range(1, 100) <= 25:
-		gold += 0
+		gold += 10
 	else:
 		gold += 30
 	_advance_after_noncombat()
+
+
+func _show_unavailable_event_choice(reason: String) -> void:
+	_show_choice_screen(
+		_tr("event.unavailable.title", "Choice unavailable"),
+		reason,
+		[{"text": _tr("event.unavailable.continue", "Return to the route."), "action": func() -> void: _advance_after_noncombat()}]
+	)
 
 
 func _show_shop() -> void:
@@ -1774,22 +1936,19 @@ func _show_campfire() -> void:
 	_add_campfire_action(action_box, _tr("camp.rest", "Rest: heal 30% HP"), _tr("camp.rest_hint", "Heal and return to the map."), _load_png_texture("res://art/generated/ui/campfire_rest_icon.png"), Callable(self, "_campfire_rest"), true)
 	_add_campfire_action(action_box, _tr("camp.upgrade", "Smith: upgrade a card"), _tr("camp.upgrade_hint", "Choose one unupgraded card."), _load_png_texture("res://art/generated/ui/campfire_upgrade_icon.png"), func() -> void:
 		_show_card_picker_for_upgrade(_tr("camp.upgrade", "Waxlight upgrade"), _tr("camp.upgrade_hint", "Choose one unupgraded card."), true), _has_upgrade_target())
-	_add_campfire_action(action_box, _tr("camp.remove", "Toke: remove a card"), _tr("camp.remove_hint", "Burn a non-basic card permanently."), null, func() -> void:
-		_show_card_picker_for_remove_any(_tr("camp.remove", "Waxlight Toke"), _tr("camp.remove_hint", "Burn a non-basic card permanently."), true), run_deck_ids.size() > 8)
+	_add_campfire_action(action_box, _tr("camp.remove", "Burn: remove a card"), _tr("camp.remove_hint", "Burn a non-basic card permanently."), null, func() -> void:
+		_show_card_picker_for_remove_any(_tr("camp.remove", "Waxlight Burn"), _tr("camp.remove_hint", "Burn a non-basic card permanently."), true), run_deck_ids.size() > 8)
 	_add_campfire_action(action_box, _tr("camp.transform", "Lift: transform a card"), _tr("camp.transform_hint", "Rewrite one card into another of the same type."), null, func() -> void:
 		_show_card_picker_for_transform(_tr("camp.transform", "Waxlight Lift"), _tr("camp.transform_hint", "Rewrite one card into another of the same type."), true), _has_transform_target())
 
 
 func _add_campfire_action(parent: VBoxContainer, title_text: String, hint_text: String, icon: Texture2D, action: Callable, enabled: bool) -> void:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, 82)
+	button.custom_minimum_size = Vector2(0, 86)
 	button.disabled = not enabled
-	button.text = "%s\n%s" % [title_text, hint_text]
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	button.text = title_text
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	if icon != null:
-		button.icon = icon
-		button.expand_icon = false
+	button.tooltip_text = hint_text
 	button.pressed.connect(action)
 	parent.add_child(button)
 
@@ -1962,14 +2121,11 @@ func _random_transform_replacement(old_id: String) -> String:
 		return ""
 	var target_type := String(old_data.card_type)
 	var pool: Array[String] = []
-	for card_id in card_database.keys():
+	for card_id in _reward_card_pool():
 		var entry = card_database[card_id]
 		if String(entry.id) == old_id:
 			continue
 		if String(entry.card_type) != target_type:
-			continue
-		var rarity := String(entry.rarity)
-		if rarity == "basic" or rarity == "special":
 			continue
 		pool.append(String(entry.id))
 	if pool.is_empty():
@@ -1997,13 +2153,13 @@ func _has_upgrade_target() -> bool:
 func _shop_card_offers() -> Array:
 	var offers: Array = []
 	var selected: Array[String] = []
-	var attacks := _reward_card_candidates_for_type("attack", selected)
-	var skills := _reward_card_candidates_for_type("skill", selected)
+	var attacks := _shop_card_candidates_for_type("attack", selected)
+	var skills := _shop_card_candidates_for_type("skill", selected)
 	if not attacks.is_empty():
 		selected.append(_pick_id(attacks))
 	if not skills.is_empty():
 		selected.append(_pick_id(skills))
-	var remaining := _reward_card_candidates_for_type("", selected)
+	var remaining := _shop_card_candidates_for_type("", selected)
 	while selected.size() < 3 and not remaining.is_empty():
 		var card_id := _pick_id(remaining)
 		selected.append(card_id)
@@ -2021,14 +2177,17 @@ func _shop_card_offers() -> Array:
 
 
 func _shop_relic_offers() -> Array:
-	var candidates: Array[String] = []
-	for relic_id in relic_database.keys():
-		if String(relic_id) != "sealed_badge" and not relic_ids.has(String(relic_id)):
-			candidates.append(String(relic_id))
 	var offers: Array = []
-	while offers.size() < 2 and not candidates.is_empty():
+	while offers.size() < 2:
+		var source_pool := _roll_relic_source_pool(true)
+		var candidates := _relic_candidates(source_pool)
+		if candidates.is_empty() and source_pool != "":
+			candidates = _relic_candidates("")
+		for offer in offers:
+			candidates.erase(String(offer.get("id", "")))
+		if candidates.is_empty():
+			break
 		var relic_id := _pick_id(candidates)
-		candidates.erase(relic_id)
 		var relic = relic_database[relic_id]
 		var price := 150
 		if relic.rarity == "uncommon":
@@ -2076,20 +2235,87 @@ func _remove_price() -> int:
 
 
 func _random_reward_card_id() -> String:
-	var pool := _reward_card_candidates_for_rarity(_roll_run_reward_rarity())
+	var source_pool := _roll_reward_source_pool(false)
+	var rarity := _roll_run_reward_rarity()
+	var pool := _reward_card_candidates_for_rarity(rarity, source_pool)
+	if pool.is_empty() and source_pool != "":
+		pool = _reward_card_candidates_for_rarity(rarity, "")
 	if pool.is_empty():
 		pool = _reward_card_pool()
 	return pool[reward_rng.randi_range(0, pool.size() - 1)]
 
 
-func _reward_card_pool() -> Array[String]:
+func _reward_card_pool(source_pool: String = "") -> Array[String]:
 	var ids: Array[String] = []
 	for card_id in card_database.keys():
-		if String(card_database[card_id].rarity) != "basic":
+		if _is_rewardable_card(String(card_id), source_pool):
 			ids.append(String(card_id))
 	if not ids.is_empty():
 		return ids
 	return ["measured_cut", "brace", "shield_tap", "quick_read", "forward_step", "break_rhythm", "oath_pressure"]
+
+
+func _is_rewardable_card(card_id: String, source_pool: String = "") -> bool:
+	if not card_database.has(card_id):
+		return false
+	var card = card_database[card_id]
+	if not bool(card.get("rewardable")):
+		return false
+	var rarity := String(card.rarity)
+	if rarity == "basic" or rarity == "special":
+		return false
+	var card_type := String(card.card_type)
+	if card_type == "curse" or card_type == "status":
+		return false
+	var pool_id := _card_pool_id(card)
+	if pool_id == "status" or pool_id == "curse" or pool_id == "generated" or pool_id == "event":
+		return false
+	if source_pool != "" and pool_id != source_pool:
+		return false
+	return _card_allowed_for_current_character(card)
+
+
+func _card_allowed_for_current_character(card) -> bool:
+	var pool_id := _card_pool_id(card)
+	if pool_id == "public":
+		return true
+	return pool_id == _current_character_pool_id()
+
+
+func _card_pool_id(card) -> String:
+	var pool_id := String(card.get("pool_id"))
+	if pool_id == "":
+		return "public"
+	return pool_id
+
+
+func _current_character_pool_id() -> String:
+	return _character_card_pool_id(character_id if character_id != "" else selected_character_id)
+
+
+func _character_card_pool_id(char_id: String) -> String:
+	var data = CharacterCatalogScript.resolve(character_catalog, char_id)
+	if data != null:
+		var pool_id := String(data.get("card_pool_id"))
+		if pool_id != "":
+			return pool_id
+	if char_id.begins_with("char_"):
+		return char_id.trim_prefix("char_")
+	return char_id
+
+
+func _roll_reward_source_pool(for_shop: bool = false) -> String:
+	var character_pool := _current_character_pool_id()
+	var roll := reward_rng.randi_range(1, 100)
+	if for_shop:
+		if roll <= 60:
+			return character_pool
+		if roll <= 95:
+			return "public"
+		return character_pool
+	if roll <= 85:
+		return character_pool
+	return "public"
 
 
 func _card_rarity(card_id: String) -> String:
@@ -2113,9 +2339,9 @@ func _card_display_name(card_entry: String) -> String:
 	return display_name
 
 
-func _reward_card_candidates_for_type(card_type: String, excluded: Array[String]) -> Array[String]:
+func _reward_card_candidates_for_type(card_type: String, excluded: Array[String], source_pool: String = "") -> Array[String]:
 	var ids: Array[String] = []
-	for card_id in _reward_card_pool():
+	for card_id in _reward_card_pool(source_pool):
 		if excluded.has(card_id):
 			continue
 		if card_type == "" or (card_database.has(card_id) and String(card_database[card_id].card_type) == card_type):
@@ -2123,9 +2349,17 @@ func _reward_card_candidates_for_type(card_type: String, excluded: Array[String]
 	return ids
 
 
-func _reward_card_candidates_for_rarity(rarity: String) -> Array[String]:
+func _shop_card_candidates_for_type(card_type: String, excluded: Array[String]) -> Array[String]:
+	var source_pool := _roll_reward_source_pool(true)
+	var ids := _reward_card_candidates_for_type(card_type, excluded, source_pool)
+	if ids.is_empty() and source_pool != "":
+		ids = _reward_card_candidates_for_type(card_type, excluded, "")
+	return ids
+
+
+func _reward_card_candidates_for_rarity(rarity: String, source_pool: String = "") -> Array[String]:
 	var ids: Array[String] = []
-	for card_id in _reward_card_pool():
+	for card_id in _reward_card_pool(source_pool):
 		if _card_rarity(card_id) == rarity:
 			ids.append(card_id)
 	return ids
@@ -2244,29 +2478,77 @@ func _show_choice_screen(title_text: String, body_text: String, choices: Array) 
 	scene_art.custom_minimum_size = Vector2(0, 140)
 	story_box.add_child(scene_art)
 
-	var choices_scroll := ScrollContainer.new()
-	choices_scroll.custom_minimum_size = Vector2(470, 420)
-	choices_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	choices_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	box.add_child(choices_scroll)
-
 	var choices_box := VBoxContainer.new()
+	choices_box.custom_minimum_size = Vector2(470, 0)
 	choices_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choices_box.add_theme_constant_override("separation", 12)
-	choices_scroll.add_child(choices_box)
+	box.add_child(choices_box)
 
 	for choice in choices:
-		var button := Button.new()
-		button.text = choice.text
-		button.custom_minimum_size = Vector2(0, 58)
-		button.pressed.connect(choice.action)
-		# Attach a small icon so campfire / shop choices read at a glance.
 		var choice_icon := _choice_button_icon(String(choice.text))
-		if choice_icon != null:
-			button.icon = choice_icon
-			button.expand_icon = false
-			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		choices_box.add_child(button)
+		var hint := String(choice.get("hint", ""))
+		var enabled := bool(choice.get("enabled", true))
+		_add_choice_action(choices_box, String(choice.text), hint, choice_icon, choice.action, enabled)
+
+
+func _add_choice_action(parent: VBoxContainer, title_text: String, hint_text: String, icon: Texture2D, action: Callable, enabled: bool = true) -> void:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(0, 78)
+	button.text = title_text
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.tooltip_text = hint_text
+	button.disabled = not enabled
+	button.pressed.connect(action)
+	parent.add_child(button)
+
+
+func _add_action_row_content(button: Button, title_text: String, hint_text: String, icon: Texture2D) -> void:
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.offset_left = 12
+	margin.offset_top = 8
+	margin.offset_right = -12
+	margin.offset_bottom = -8
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	if icon != null:
+		var icon_rect := TextureRect.new()
+		icon_rect.texture = icon
+		icon_rect.custom_minimum_size = Vector2(34, 34)
+		icon_rect.ignore_texture_size = true
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(icon_rect)
+
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.add_theme_constant_override("separation", 2)
+	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(text_box)
+
+	var title := Label.new()
+	title.text = title_text
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title.add_theme_font_size_override("font_size", 15)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text_box.add_child(title)
+
+	if hint_text != "":
+		var hint := Label.new()
+		hint.text = hint_text
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hint.add_theme_font_size_override("font_size", 12)
+		hint.modulate = Color(0.82, 0.76, 0.66, 0.88)
+		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		text_box.add_child(hint)
 
 
 func _choice_button_icon(choice_text: String) -> Texture2D:
@@ -2299,12 +2581,30 @@ func _choice_background_texture(title_text: String) -> Texture2D:
 		return _load_png_texture("res://art/generated/backgrounds/defeat_archive_closing.png")
 	if title_text.find("Quiet Stack") >= 0 or title_text.find("静默书堆") >= 0:
 		return _load_png_texture("res://art/generated/backgrounds/event_quiet_stack.png")
-	if title_text.find("Clean Margin") >= 0 or title_text.find("Margin") >= 0 or title_text.find("干净页边") >= 0:
+	if title_text.find("Silent Margin") >= 0 or title_text.find("静默页边") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_silent_margin.png")
+	if title_text.find("Clean Margin") >= 0 or title_text.find("干净页边") >= 0:
 		return _load_png_texture("res://art/generated/backgrounds/event_clean_margin.png")
 	if title_text.find("Red String") >= 0 or title_text.find("红线") >= 0:
 		return _load_png_texture("res://art/generated/backgrounds/event_red_string.png")
 	if title_text.find("Revision") >= 0 or title_text.find("修订桌") >= 0:
 		return _load_png_texture("res://art/generated/backgrounds/event_revision_desk.png")
+	if title_text.find("Transform Lantern") >= 0 or title_text.find("变化提灯") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_transform_lantern.png")
+	if title_text.find("Ink Well") >= 0 or title_text.find("墨井") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_ink_well.png")
+	if title_text.find("Dust Oracle") >= 0 or title_text.find("尘土神谕") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_dust_oracle.png")
+	if title_text.find("Weighing Scales") >= 0 or title_text.find("称量天平") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_weighing_scales.png")
+	if title_text.find("Burned Archive") >= 0 or title_text.find("焚毁档案室") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_burned_archive.png")
+	if title_text.find("Broken Standard") >= 0 or title_text.find("断裂战旗") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_broken_standard.png")
+	if title_text.find("Unpaid Contract") >= 0 or title_text.find("未付契约") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_unpaid_contract.png")
+	if title_text.find("Core Orrery") >= 0 or title_text.find("核心星仪") >= 0:
+		return _load_png_texture("res://art/generated/backgrounds/event_core_orrery.png")
 	if title_text.find("Loose Page") >= 0 or title_text.find("Loose Folio") >= 0 or title_text.find("散页") >= 0:
 		return _load_png_texture("res://art/generated/backgrounds/event_loose_page.png")
 	if title_text.find("Archive Key") >= 0 or title_text.find("Victory") >= 0 or title_text.find("档案钥匙") >= 0 or title_text.find("胜利") >= 0:
@@ -2404,9 +2704,9 @@ func _show_run_summary(outcome: String) -> void:
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.offset_left = -480
-	panel.offset_top = -260
+	panel.offset_top = -300
 	panel.offset_right = 480
-	panel.offset_bottom = 260
+	panel.offset_bottom = 300
 	if outcome == "victory":
 		panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.07, 0.06, 0.04, 0.92), Color(0.78, 0.58, 0.22, 0.95)))
 	else:
@@ -2445,7 +2745,7 @@ func _show_run_summary(outcome: String) -> void:
 	var char_data = CharacterCatalogScript.resolve(character_catalog, character_id)
 	var char_name := character_id
 	if char_data != null and String(char_data.display_name) != "":
-		char_name = String(char_data.display_name)
+		char_name = _localized_name(String(char_data.id), String(char_data.display_name))
 	subtitle.text = _tr("summary.subtitle", "%s - Ascension %d - Seed %d") % [char_name, ascension_level, run_seed]
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.modulate = Color(0.86, 0.82, 0.74)
@@ -2454,11 +2754,17 @@ func _show_run_summary(outcome: String) -> void:
 	var sep := HSeparator.new()
 	inner.add_child(sep)
 
+	var body_scroll := ScrollContainer.new()
+	body_scroll.custom_minimum_size = Vector2(0, 285)
+	body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inner.add_child(body_scroll)
+
 	# Two-column body: left = headline numbers, right = deck composition + relics.
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 22)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inner.add_child(body)
+	body_scroll.add_child(body)
 
 	var stats_col := VBoxContainer.new()
 	stats_col.add_theme_constant_override("separation", 6)

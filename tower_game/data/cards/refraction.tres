@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "refraction"
+display_name = "Refraction"
+card_type = "skill"
+rarity = "uncommon"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["ward", "aoe", "debuff"]
+keyword_tags = ["block", "weak"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Gain 8 Block. Apply 1 Weak to ALL enemies."
+upgraded_description = "Gain 11 Block. Apply 1 Weak to ALL enemies."
+effects = Array[Dictionary]([{"type": "block", "amount": 8}, {"type": "status_all_enemies", "status": "weak", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 11}, {"type": "status_all_enemies", "status": "weak", "amount": 1}])
+card_target = "all_enemies"

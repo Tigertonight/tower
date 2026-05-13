@@ -52,6 +52,8 @@ var configured_max_hp := 76
 var configured_node_type := "combat"
 var configured_title := "Combat"
 var configured_encounter_id := ""
+var configured_character_id := "char_vanguard"
+var configured_card_pool_id := "vanguard"
 var configured_relic_ids: Array[String] = ["sealed_badge"]
 var ascension_level: int = 0
 var combat_rng := RandomNumberGenerator.new()
@@ -151,7 +153,7 @@ func _ready() -> void:
 	_start_combat()
 
 
-func configure(deck_ids: Array[String], current_hp: int, max_hp: int, node_type: String, combat_index: int, node_title: String = "", encounter_id: String = "", rng_seed: int = 1, relic_ids: Array[String] = [], ascension: int = 0) -> void:
+func configure(deck_ids: Array[String], current_hp: int, max_hp: int, node_type: String, combat_index: int, node_title: String = "", encounter_id: String = "", rng_seed: int = 1, relic_ids: Array[String] = [], ascension: int = 0, character_id: String = "char_vanguard", card_pool_id: String = "") -> void:
 	run_deck_ids = deck_ids.duplicate()
 	configured_hp = current_hp
 	configured_max_hp = max_hp
@@ -159,6 +161,8 @@ func configure(deck_ids: Array[String], current_hp: int, max_hp: int, node_type:
 	combats_won = combat_index
 	configured_title = node_title if node_title != "" else node_type.capitalize()
 	configured_encounter_id = encounter_id
+	configured_character_id = character_id
+	configured_card_pool_id = card_pool_id if card_pool_id != "" else _legacy_pool_id_for_character(character_id)
 	configured_relic_ids = relic_ids.duplicate()
 	if configured_relic_ids.is_empty():
 		configured_relic_ids = ["sealed_badge"]
@@ -1035,15 +1039,8 @@ func _create_card_database() -> void:
 			_load_card("res://data/cards/%s" % file_name)
 	reward_pool.clear()
 	for card_id in card_database.keys():
-		var card_data = card_database[card_id]
-		var rarity := String(card_data.rarity)
-		var c_type := String(card_data.card_type)
-		# Exclude basic openers and unplayable curse/status cards from reward draws.
-		if rarity == "basic" or rarity == "special":
-			continue
-		if c_type == "curse" or c_type == "status":
-			continue
-		reward_pool.append(String(card_id))
+		if _is_rewardable_card(String(card_id)):
+			reward_pool.append(String(card_id))
 
 
 func _create_enemy_database() -> void:
@@ -1147,12 +1144,12 @@ func _start_combat() -> void:
 	_promote_innate_cards()
 	deck.draw_cards(5)
 	if enemies.size() == 1:
-		_set_log("%s rises from the archive floor." % enemy.display_name)
+		_set_log(_tr("combat.log.enemy_rises", "%s rises from the archive floor.") % _localized_name(enemy.id, enemy.display_name))
 	else:
 		var names: Array[String] = []
 		for inst3 in enemies:
-			names.append(inst3.display_name)
-		_set_log("%s rise from the archive floor." % ", ".join(names))
+			names.append(_localized_name(inst3.id, inst3.display_name))
+		_set_log(_tr("combat.log.enemies_rise", "%s rise from the archive floor.") % ", ".join(names))
 	_update_ui()
 	_play_combat_intro()
 	_maybe_play_tutorial_hints()
@@ -1967,11 +1964,14 @@ func _show_card_rewards() -> void:
 	var picked: Array[String] = []
 	while cards.size() < 3 and picked.size() < reward_pool.size():
 		var rarity := _roll_reward_rarity()
-		var candidates := _reward_candidates_for_rarity(rarity, picked)
+		var source_pool := _roll_reward_source_pool()
+		var candidates := _reward_candidates_for_rarity(rarity, picked, source_pool)
+		if candidates.is_empty() and source_pool != "":
+			candidates = _reward_candidates_for_rarity(rarity, picked, "")
 		if candidates.is_empty():
-			candidates = _reward_candidates_for_rarity("common", picked)
+			candidates = _reward_candidates_for_rarity("common", picked, "")
 		if candidates.is_empty():
-			candidates = _reward_candidates_for_rarity("", picked)
+			candidates = _reward_candidates_for_rarity("", picked, "")
 		if candidates.is_empty():
 			break
 		var card_id := String(candidates[combat_rng.randi_range(0, candidates.size() - 1)])
@@ -2007,14 +2007,73 @@ func _roll_reward_rarity() -> String:
 	return "rare"
 
 
-func _reward_candidates_for_rarity(rarity: String, excluded: Array[String]) -> Array[String]:
+func _reward_candidates_for_rarity(rarity: String, excluded: Array[String], source_pool: String = "") -> Array[String]:
 	var ids: Array[String] = []
 	for card_id in reward_pool:
 		if excluded.has(card_id):
 			continue
+		if source_pool != "" and _card_pool_id(card_database[card_id]) != source_pool:
+			continue
 		if rarity == "" or String(card_database[card_id].rarity) == rarity:
 			ids.append(card_id)
 	return ids
+
+
+func _is_rewardable_card(card_id: String, source_pool: String = "") -> bool:
+	if not card_database.has(card_id):
+		return false
+	var card = card_database[card_id]
+	if not bool(card.get("rewardable")):
+		return false
+	var rarity := String(card.rarity)
+	if rarity == "basic" or rarity == "special":
+		return false
+	var card_type := String(card.card_type)
+	if card_type == "curse" or card_type == "status":
+		return false
+	var pool_id := _card_pool_id(card)
+	if pool_id == "status" or pool_id == "curse" or pool_id == "generated" or pool_id == "event":
+		return false
+	if source_pool != "" and pool_id != source_pool:
+		return false
+	if pool_id == "public":
+		return true
+	return pool_id == _current_character_pool_id()
+
+
+func _card_pool_id(card) -> String:
+	var pool_id := String(card.get("pool_id"))
+	if pool_id == "":
+		return "public"
+	return pool_id
+
+
+func _current_character_pool_id() -> String:
+	if configured_card_pool_id != "":
+		return configured_card_pool_id
+	return _legacy_pool_id_for_character(configured_character_id)
+
+
+func _legacy_pool_id_for_character(char_id: String) -> String:
+	if char_id.begins_with("char_"):
+		return char_id.trim_prefix("char_")
+	return char_id
+
+
+func _roll_reward_source_pool() -> String:
+	var roll := combat_rng.randi_range(1, 100)
+	var character_pool := _current_character_pool_id()
+	if configured_node_type == "elite":
+		if roll <= 80:
+			return character_pool
+		return "public"
+	if configured_node_type == "boss":
+		if roll <= 70:
+			return character_pool
+		return "public"
+	if roll <= 85:
+		return character_pool
+	return "public"
 
 
 func _on_reward_card_chosen(card_id: String) -> void:
@@ -2032,9 +2091,9 @@ func _on_reward_skipped() -> void:
 
 
 func _update_ui() -> void:
-	combat_title_label.text = configured_title
-	player_label.text = "HP %d/%d    Block %d    Energy %d/%d" % [player_hp, player_max_hp, player_block, player_energy, base_energy]
-	piles_label.text = "Draw %d    Hand %d    Discard %d    Exhaust %d" % [deck.draw_pile.size(), deck.hand.size(), deck.discard_pile.size(), deck.exhaust_pile.size()]
+	combat_title_label.text = _localized_combat_title()
+	player_label.text = _tr("combat.top_player", "HP %d/%d    Block %d    Energy %d/%d") % [player_hp, player_max_hp, player_block, player_energy, base_energy]
+	piles_label.text = _tr("combat.top_piles", "Draw %d    Hand %d    Discard %d    Exhaust %d") % [deck.draw_pile.size(), deck.hand.size(), deck.discard_pile.size(), deck.exhaust_pile.size()]
 	_update_relic_icon_row()
 	player_label.tooltip_text = "Player statuses: %s" % (_status_text(player_statuses) if _status_text(player_statuses) != "" else "none")
 	player_hp_bar.max_value = player_max_hp
@@ -2214,21 +2273,39 @@ func _intent_display_text_for(target_enemy) -> String:
 		return "—"
 	match target_enemy.intent_type:
 		"defend":
-			return "WARD\nBlock %d" % target_enemy.intent_block
+			return "%s\n%s %d" % [_tr("intent.ward", "WARD"), _tr("intent.block", "Block"), target_enemy.intent_block]
 		"attack_multi":
 			return "!\n%d x %d" % [target_enemy.intent_multi_hit_count, target_enemy.intent_damage]
 		"attack_defend":
-			return "!\n%d + Block %d" % [target_enemy.intent_damage, target_enemy.intent_block]
+			return "!\n%d + %s %d" % [target_enemy.intent_damage, _tr("intent.block", "Block"), target_enemy.intent_block]
 		"buff":
-			return "UP\nBuff"
+			return "%s\n%s" % [_tr("intent.up", "UP"), _tr("intent.buff", "Buff")]
 		"debuff":
-			return "DOWN\nDebuff"
+			return "%s\n%s" % [_tr("intent.down", "DOWN"), _tr("intent.debuff", "Debuff")]
 		"unknown":
-			return "?\nUnknown"
+			return "?\n%s" % _tr("intent.unknown", "Unknown")
 		"heavy_attack":
-			return "!!\nHeavy Attack %d" % target_enemy.intent_damage
+			return "!!\n%s %d" % [_tr("intent.heavy_attack", "Heavy Attack"), target_enemy.intent_damage]
 		_:
-			return "!\nAttack %d" % target_enemy.intent_damage
+			return "!\n%s %d" % [_tr("intent.attack", "Attack"), target_enemy.intent_damage]
+
+
+func _localized_combat_title() -> String:
+	if configured_encounter_id != "":
+		return _localized_name(configured_encounter_id, configured_title)
+	match configured_title:
+		"Dust Scribe":
+			return _localized_name("e_dust_scribe", configured_title)
+		"Loose Folio":
+			return _localized_name("e_loose_folio", configured_title)
+		"Wax Sentinel":
+			return _localized_name("el_wax_sentinel", configured_title)
+		"Sealed Curator":
+			return _localized_name("b_sealed_curator", configured_title)
+		"Combat":
+			return _tr("map.node.combat.title", configured_title)
+		_:
+			return configured_title
 
 
 func _intent_texture() -> Texture2D:

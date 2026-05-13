@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
-
 [ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
-
 [resource]
 script = ExtResource("1_relic_data")
 id = "warden_glove"
 display_name = "Warden Glove"
-rarity = "rare"
-description = "At the start of each combat, gain 1 Strength, 1 Dexterity, and 4 Block."
-trigger = "combat_start"
-effects = Array[Dictionary]([{"type": "strength", "amount": 1}, {"type": "dexterity", "amount": 1}, {"type": "block", "amount": 4}])
+rarity = "common"
+description = "Every 3rd Attack you play deals 3 damage to the target."
+pool_id = "warrior"
+character_id = "char_vanguard"
+archetype_tags = ["attack","multi_hit","guard_tempo"]
+trigger = "card_played"
+effects = Array[Dictionary]([{"type": "damage", "amount": 3, "target": "enemy"}])
+trigger_params = {"card_type_filter": "attack", "every_n": 3}

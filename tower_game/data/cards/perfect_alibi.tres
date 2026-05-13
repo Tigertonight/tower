@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "perfect_alibi"
+display_name = "Perfect Alibi"
+card_type = "power"
+rarity = "rare"
+pool_id = "assassin"
+character_id = "char_assassin"
+archetype_tags = ["power", "scaling"]
+keyword_tags = ["strength", "dexterity"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 3
+description = "Gain 2 Strength. Gain 2 Dexterity."
+upgraded_description = "Gain 3 Strength. Gain 3 Dexterity."
+effects = Array[Dictionary]([{"type": "strength", "amount": 2}, {"type": "dexterity", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "strength", "amount": 3}, {"type": "dexterity", "amount": 3}])
+card_target = "self"

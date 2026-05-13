@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "death_by_index"
+display_name = "Death by Index"
+card_type = "attack"
+rarity = "rare"
+pool_id = "assassin"
+character_id = "char_assassin"
+archetype_tags = ["multi_hit", "finisher", "exhaust"]
+keyword_tags = []
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 3
+description = "Deal 8 damage 4 times. Exhaust."
+upgraded_description = "Deal 10 damage 4 times. Exhaust."
+effects = Array[Dictionary]([{"type": "damage", "amount": 8}, {"type": "damage", "amount": 8}, {"type": "damage", "amount": 8}, {"type": "damage", "amount": 8}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 10}, {"type": "damage", "amount": 10}, {"type": "damage", "amount": 10}, {"type": "damage", "amount": 10}])
+exhaust_on_play = true

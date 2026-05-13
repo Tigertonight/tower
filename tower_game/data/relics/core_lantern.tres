@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "core_lantern"
+display_name = "Core Lantern"
+rarity = "starter"
+description = "Prototype Mage starter relic. Start combat with Charge and discount the first spell once Charge and spell tags are implemented."
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["charge", "spell", "cost_reduce", "prototype"]
+trigger = ""
+effects = Array[Dictionary]([])
+trigger_params = {"prototype": true}

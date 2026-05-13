@@ -179,22 +179,22 @@ func _build_act_encounter_list() -> Array:
 	# Hand-pick a representative set per act so sims don't depend on map RNG.
 	return [
 		# Act 1
-		["e_dust_scribe", "e_loose_folio", "e_dust_scribe+e_loose_folio", "e_wax_acolyte", "e_margin_hound", "e_burnt_courier", "el_first_clause"],
+		["e_dust_scribe", "e_index_rat", "e_loose_folio", "e_dust_scribe+e_loose_folio", "e_wax_acolyte", "e_staple_swarm", "e_margin_hound", "e_wax_acolyte+e_margin_hound", "el_dust_chorus"],
 		# Act 2
-		["e_glassed_intern", "e_late_filer", "e_glassed_intern+e_late_filer", "e_silent_ledger", "e_dust_sentinel", "el_quill_judge"],
+		["e_glassed_intern", "e_ink_moth", "e_late_filer", "e_glassed_intern+e_late_filer", "e_clause_mender", "e_dust_sentinel", "e_ledger_sentry", "e_silent_ledger+e_red_string_imp", "el_penitent_index"],
 		# Act 3
-		["e_late_filer", "e_silent_ledger", "e_dust_sentinel", "e_red_string_imp", "e_burnt_courier", "el_archive_warden", "e_dust_sentinel+e_burnt_courier+e_red_string_imp"],
+		["e_null_page", "e_late_filer+e_null_page", "e_redaction_monk", "e_burnt_courier", "e_keyhole_mimic", "e_redaction_monk+e_burnt_courier", "el_null_librarian", "e_dust_sentinel+e_burnt_courier+e_red_string_imp", "el_redaction_engine"],
 	]
 
 
 func _act_boss_id(act: int) -> String:
 	match act:
 		1:
-			return "b_chronicler_of_lost_pages"
+			return "b_ink_tyrant"
 		2:
-			return "b_grand_archivist"
+			return "b_mirror_tribunal"
 		3:
-			return "b_sealed_curator"
+			return "b_last_catalog"
 		_:
 			return "b_sealed_curator"
 

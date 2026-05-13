@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "archive_supernova"
+display_name = "Archive Supernova"
+card_type = "attack"
+rarity = "rare"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["aoe", "finisher", "exhaust"]
+keyword_tags = []
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 3
+description = "Deal 18 damage to ALL enemies. Exhaust."
+upgraded_description = "Deal 25 damage to ALL enemies. Exhaust."
+effects = Array[Dictionary]([{"type": "damage_all_enemies", "amount": 18}])
+upgraded_effects = Array[Dictionary]([{"type": "damage_all_enemies", "amount": 25}])
+exhaust_on_play = true
+card_target = "all_enemies"

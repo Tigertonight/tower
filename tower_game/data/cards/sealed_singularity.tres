@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "sealed_singularity"
+display_name = "Sealed Singularity"
+card_type = "skill"
+rarity = "rare"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["control", "aoe", "exhaust"]
+keyword_tags = ["weak", "vulnerable"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Apply 2 Weak and 2 Vulnerable to ALL enemies. Exhaust."
+upgraded_description = "Apply 3 Weak and 2 Vulnerable to ALL enemies. Exhaust."
+effects = Array[Dictionary]([{"type": "status_all_enemies", "status": "weak", "amount": 2}, {"type": "status_all_enemies", "status": "vulnerable", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "status_all_enemies", "status": "weak", "amount": 3}, {"type": "status_all_enemies", "status": "vulnerable", "amount": 2}])
+exhaust_on_play = true
+card_target = "all_enemies"

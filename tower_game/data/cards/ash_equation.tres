@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "ash_equation"
+display_name = "Ash Equation"
+card_type = "attack"
+rarity = "common"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["debuff", "attack"]
+keyword_tags = ["vulnerable"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Deal 6 damage. Apply 1 Vulnerable."
+upgraded_description = "Deal 8 damage. Apply 1 Vulnerable."
+effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "status", "status": "vulnerable", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 8}, {"type": "status", "status": "vulnerable", "amount": 1}])

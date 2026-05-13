@@ -2,7 +2,7 @@ class_name EffectResolver
 extends RefCounted
 
 
-static func resolve(effect: Dictionary, combat: Node, source: Variant, target: Variant) -> void:
+static func resolve(effect: Dictionary, combat: Variant, source: Variant, target: Variant) -> void:
 	var effect_type := String(effect.get("type", ""))
 	match effect_type:
 		"damage":

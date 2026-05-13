@@ -2,7 +2,7 @@
 
 Project codename: **Tower**
 
-Status: Draft v1
+Status: Draft v2 — expanded encounter baseline
 
 This document defines the MVP enemy and boss roster: HP bands, base stats, move pools, intent sequencing, AI weighting rules, and authoring rules for `EnemyData` / `EnemyMoveData` resources. All numbers below assume the Vanguard Archivist starting profile in `09_first_character_design.md` (76 HP, 3 energy, hand 5).
 
@@ -57,6 +57,14 @@ This is data-driven so designers can author behaviour without script changes.
 
 ## MVP Roster Summary
 
+Implementation snapshot, 2026-05-13:
+
+- Normal enemies: **18** total.
+- Elites: **9** total, distributed as 3 per act.
+- Bosses: **6** total, distributed as 2 candidates per act.
+- Encounter generation now keeps act-specific early/mid/late normal pools, supports multi-enemy packs, and rolls a boss candidate per act map.
+- New content intentionally reuses existing art placeholders; unique enemy art remains a follow-up asset task.
+
 | ID | Tier | HP | Floors | Role |
 | --- | --- | --- | --- | --- |
 | `e_dust_scribe` | Normal | 24 | 1–3 | Tutorial attacker. |
@@ -67,6 +75,26 @@ This is data-driven so designers can author behaviour without script changes.
 | `el_wax_sentinel` | Elite | 70 | 4–6 | Block + retaliate. |
 | `el_first_clause` | Elite | 78 | 6–8 | Card-disruption. |
 | `b_sealed_curator` | Boss | 200 | 9 | Two-phase debuff/lock. |
+
+Expanded roster:
+
+| ID | Tier | Act | Role |
+| --- | --- | --- | --- |
+| `e_index_rat` | Normal | 1 | Low-HP multi-hit and Vulnerable tutorial. |
+| `e_staple_swarm` | Normal | 1 | Frail + many small hits. |
+| `e_ink_moth` | Normal | 2 | Ink pressure and single-hit dive. |
+| `e_clause_mender` | Normal | 2 | Scaling defender that punishes slow decks. |
+| `e_ledger_sentry` | Normal | 2 | Armored mark-and-slam check. |
+| `e_null_page` | Normal | 3 | Weak/Fold pressure; asks for flexible turns. |
+| `e_redaction_monk` | Normal | 3 | Strength scaling and Frail pressure. |
+| `e_keyhole_mimic` | Normal | 3 | High block, Vulnerable, delayed bite. |
+| `el_dust_chorus` | Elite | 1 | Multi-hit burst after Weak setup. |
+| `el_penitent_index` | Elite | 2 | Block-scaling elite with Frail pressure. |
+| `el_null_librarian` | Elite | 3 | Weak/Frail control into heavy attacks. |
+| `el_redaction_engine` | Elite | 3 | Multi-hit damage check with block windows. |
+| `b_ink_tyrant` | Boss | 1 | Ink DoT boss; tests burst before stack pressure snowballs. |
+| `b_mirror_tribunal` | Boss | 2 | Block/scaling boss; tests pacing and debuff answers. |
+| `b_last_catalog` | Boss | 3 | Final scaling boss with mixed debuffs and high phase-2 pressure. |
 
 ## Normal Enemies
 

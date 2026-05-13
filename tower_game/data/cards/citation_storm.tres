@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "citation_storm"
+display_name = "Citation Storm"
+card_type = "attack"
+rarity = "rare"
+pool_id = "archivist"
+character_id = "char_archivist"
+archetype_tags = ["ink_ledger","ink_payoff","exhaust"]
+keyword_tags = ["exhaust"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Deal damage equal to four times the target's Ink stacks. Exhaust."
+upgraded_description = "Deal damage equal to five times the target's Ink stacks. Exhaust."
+effects = Array[Dictionary]([{"type": "damage_per_target_ink", "multiplier": 4}])
+upgraded_effects = Array[Dictionary]([{"type": "damage_per_target_ink", "multiplier": 5}])
+exhaust_on_play = true

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "core_overload"
+display_name = "Core Overload"
+card_type = "power"
+rarity = "rare"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["power", "overload", "scaling"]
+keyword_tags = ["strength", "lose_hp"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 3
+description = "Gain 4 Strength. Lose 4 HP."
+upgraded_description = "Gain 5 Strength. Lose 4 HP."
+effects = Array[Dictionary]([{"type": "strength", "amount": 4}, {"type": "lose_hp", "amount": 4}])
+upgraded_effects = Array[Dictionary]([{"type": "strength", "amount": 5}, {"type": "lose_hp", "amount": 4}])
+card_target = "self"

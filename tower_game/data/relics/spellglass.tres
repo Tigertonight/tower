@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+[resource]
+script = ExtResource("1_relic_data")
+id = "spellglass"
+display_name = "Spellglass"
+rarity = "common"
+description = "Whenever you play an Attack, gain 1 Block."
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["attack", "block", "ward"]
+trigger = "card_played"
+effects = Array[Dictionary]([{"type": "block", "amount": 1}])
+trigger_params = {"card_type_filter": "attack"}

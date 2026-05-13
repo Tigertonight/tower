@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "b_ink_tyrant"
+display_name = "The Ink Tyrant"
+tier = "boss"
+max_hp = 195
+art_path = "res://art/generated/sprites/ink_tyrant.png"
+move_pool = Array[Dictionary]([{"move_id": "mv_tyrant_spill", "weight": 3, "max_in_row": 1}, {"move_id": "mv_black_decree", "weight": 3, "max_in_row": 2}, {"move_id": "mv_crowned_ink", "weight": 2, "max_in_row": 1}])
+opener_move_ids = Array[String](["mv_tyrant_spill"])
+phase_hp_below_pct = 0.5
+phase_enter_effects = Array[Dictionary]([{"type": "strength", "amount": 4}, {"type": "block", "amount": 18}])
+phase_move_pool = Array[Dictionary]([{"move_id": "mv_tyrant_flood", "weight": 3, "max_in_row": 1}, {"move_id": "mv_black_decree", "weight": 2, "max_in_row": 1}, {"move_id": "mv_crowned_ink", "weight": 2, "max_in_row": 1}])

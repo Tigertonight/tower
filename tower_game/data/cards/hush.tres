@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "hush"
+display_name = "Hush"
+card_type = "skill"
+rarity = "common"
+pool_id = "assassin"
+character_id = "char_assassin"
+archetype_tags = ["mark", "debuff"]
+keyword_tags = ["weak", "vulnerable"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Apply 1 Weak and 1 Vulnerable."
+upgraded_description = "Apply 2 Weak and 1 Vulnerable."
+effects = Array[Dictionary]([{"type": "status", "status": "weak", "amount": 1}, {"type": "status", "status": "vulnerable", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "status", "status": "weak", "amount": 2}, {"type": "status", "status": "vulnerable", "amount": 1}])

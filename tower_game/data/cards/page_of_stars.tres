@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "page_of_stars"
+display_name = "Page of Stars"
+card_type = "skill"
+rarity = "uncommon"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["ward", "draw"]
+keyword_tags = ["block", "draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Gain 12 Block. Draw 2."
+upgraded_description = "Gain 16 Block. Draw 2."
+effects = Array[Dictionary]([{"type": "block", "amount": 12}, {"type": "draw", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 16}, {"type": "draw", "amount": 2}])
+card_target = "self"

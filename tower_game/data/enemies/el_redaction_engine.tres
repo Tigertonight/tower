@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "el_redaction_engine"
+display_name = "Redaction Engine"
+tier = "elite"
+max_hp = 116
+spawn_block = 10
+art_path = "res://art/generated/sprites/redaction_engine.png"
+move_pool = Array[Dictionary]([{"move_id": "mv_redaction_saw", "weight": 3, "max_in_row": 1}, {"move_id": "mv_censor_field", "weight": 2, "max_in_row": 1}, {"move_id": "mv_blackout_notice", "weight": 2, "max_in_row": 1}])
+opener_move_ids = Array[String](["mv_blackout_notice"])
+phase_hp_below_pct = 0.45
+phase_enter_effects = Array[Dictionary]([{"type": "strength", "amount": 2}])

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "sealed_counter"
+display_name = "Sealed Counter"
+card_type = "power"
+rarity = "rare"
+pool_id = "vanguard"
+character_id = "char_vanguard"
+archetype_tags = ["unbroken_wall","dexterity","strength"]
+keyword_tags = ["dexterity","strength"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Gain 3 Dexterity. Gain 1 Strength."
+upgraded_description = "Gain 4 Dexterity. Gain 1 Strength."
+effects = Array[Dictionary]([{"type": "dexterity", "amount": 3}, {"type": "strength", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "dexterity", "amount": 4}, {"type": "strength", "amount": 1}])
+card_target = "self"

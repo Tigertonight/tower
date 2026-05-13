@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "quiet_stamp"
+display_name = "Quiet Stamp"
+card_type = "skill"
+rarity = "common"
+pool_id = "archivist"
+character_id = "char_archivist"
+archetype_tags = ["seal_control","weak"]
+keyword_tags = ["weak"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Apply 2 Weak."
+upgraded_description = "Apply 3 Weak."
+effects = Array[Dictionary]([{"type": "status", "status": "weak", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "status", "status": "weak", "amount": 3}])

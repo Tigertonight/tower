@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "mirror_footnote"
+display_name = "Mirror Footnote"
+card_type = "skill"
+rarity = "uncommon"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["retain", "ward", "draw"]
+keyword_tags = ["block", "draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Gain 7 Block. Draw 1. Retain."
+upgraded_description = "Gain 10 Block. Draw 1. Retain."
+effects = Array[Dictionary]([{"type": "block", "amount": 7}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 10}, {"type": "draw", "amount": 1}])
+retain = true
+card_target = "self"

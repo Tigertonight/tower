@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "return_stamp"
+display_name = "Return Stamp"
+card_type = "skill"
+rarity = "uncommon"
+pool_id = "vanguard"
+character_id = "char_vanguard"
+archetype_tags = ["paper_furnace","block","exhaust","draw"]
+keyword_tags = ["block","exhaust","draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Gain 5 Block. Exhaust 1 random card in hand. Draw 1."
+upgraded_description = "Gain 8 Block. Exhaust 1 random card in hand. Draw 1."
+effects = Array[Dictionary]([{"type": "block", "amount": 5}, {"type": "exhaust_random_card", "amount": 1}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 8}, {"type": "exhaust_random_card", "amount": 1}, {"type": "draw", "amount": 1}])
+card_target = "self"

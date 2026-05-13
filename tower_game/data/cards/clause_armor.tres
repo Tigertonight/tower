@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "clause_armor"
+display_name = "Clause Armor"
+card_type = "power"
+rarity = "uncommon"
+pool_id = "vanguard"
+character_id = "char_vanguard"
+archetype_tags = ["unbroken_wall","strength","dexterity"]
+keyword_tags = ["strength","dexterity"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Gain 1 Strength. Gain 1 Dexterity."
+upgraded_description = "Gain 2 Strength. Gain 1 Dexterity."
+effects = Array[Dictionary]([{"type": "strength", "amount": 1}, {"type": "dexterity", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "strength", "amount": 2}, {"type": "dexterity", "amount": 1}])
+card_target = "self"

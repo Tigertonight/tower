@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "grand_conjunction"
+display_name = "Grand Conjunction"
+card_type = "attack"
+rarity = "rare"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["finisher", "energy"]
+keyword_tags = ["energy"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 3
+description = "Deal 22 damage. Gain 2 Energy."
+upgraded_description = "Deal 30 damage. Gain 2 Energy."
+effects = Array[Dictionary]([{"type": "damage", "amount": 22}, {"type": "energy", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 30}, {"type": "energy", "amount": 2}])

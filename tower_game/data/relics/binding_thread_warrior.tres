@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+[resource]
+script = ExtResource("1_relic_data")
+id = "binding_thread_warrior"
+display_name = "Binding Thread"
+rarity = "uncommon"
+description = "Every 2nd Skill you play grants 3 Block."
+pool_id = "warrior"
+character_id = "char_vanguard"
+archetype_tags = ["block","skill","paper_furnace"]
+trigger = "card_played"
+effects = Array[Dictionary]([{"type": "block", "amount": 3}])
+trigger_params = {"card_type_filter": "skill", "every_n": 2}

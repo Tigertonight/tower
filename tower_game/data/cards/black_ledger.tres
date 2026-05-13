@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "black_ledger"
+display_name = "Black Ledger"
+card_type = "power"
+rarity = "uncommon"
+pool_id = "archivist"
+character_id = "char_archivist"
+archetype_tags = ["ink_ledger","dexterity","power"]
+keyword_tags = ["dexterity"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Gain 2 Dexterity."
+upgraded_description = "Gain 3 Dexterity."
+effects = Array[Dictionary]([{"type": "dexterity", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "dexterity", "amount": 3}])
+card_target = "self"

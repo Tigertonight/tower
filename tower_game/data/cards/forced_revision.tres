@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "forced_revision"
+display_name = "Forced Revision"
+card_type = "skill"
+rarity = "uncommon"
+pool_id = "vanguard"
+character_id = "char_vanguard"
+archetype_tags = ["paper_furnace","exhaust","draw"]
+keyword_tags = ["exhaust","draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Exhaust 1 random card in hand. Draw 2."
+upgraded_description = "Exhaust 1 random card in hand. Draw 3."
+effects = Array[Dictionary]([{"type": "exhaust_random_card", "amount": 1}, {"type": "draw", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "exhaust_random_card", "amount": 1}, {"type": "draw", "amount": 3}])
+card_target = "self"

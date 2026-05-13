@@ -3,6 +3,7 @@ extends Resource
 
 # card_type values: "attack", "skill", "power", "curse", "status"
 # rarity values: "basic", "common", "uncommon", "rare", "special"
+# pool_id values: "vanguard", "archivist", "mage", "assassin", "public", "status", "curse", "generated", "event"
 # exhaust_on_play : true → card moves to exhaust pile after play
 # ethereal        : true → if still in hand at end of player turn, exhaust it
 # unplayable      : true → cannot be played (curse / status)
@@ -15,6 +16,14 @@ extends Resource
 @export var display_name: String = ""
 @export var card_type: String = "attack"
 @export var rarity: String = "common"
+@export var pool_id: String = "public"
+@export var character_id: String = ""
+@export var archetype_tags: Array = []
+@export var keyword_tags: Array = []
+@export var rewardable: bool = true
+@export var shop_weight: float = 1.0
+@export var reward_weight: float = 1.0
+@export var unlock_tier: int = 0
 @export var cost: int = 1
 @export var description: String = ""
 @export var upgraded_description: String = ""

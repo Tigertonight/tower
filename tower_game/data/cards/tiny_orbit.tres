@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "tiny_orbit"
+display_name = "Tiny Orbit"
+card_type = "skill"
+rarity = "common"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["charge_tempo", "ward", "energy"]
+keyword_tags = ["block", "energy"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Gain 4 Block. Gain 1 Energy."
+upgraded_description = "Gain 6 Block. Gain 1 Energy."
+effects = Array[Dictionary]([{"type": "block", "amount": 4}, {"type": "energy", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 6}, {"type": "energy", "amount": 1}])
+card_target = "self"

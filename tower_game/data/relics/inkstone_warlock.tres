@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+[resource]
+script = ExtResource("1_relic_data")
+id = "inkstone_warlock"
+display_name = "Inkstone"
+rarity = "common"
+description = "The first Skill you play each combat applies 1 Ink to the target."
+pool_id = "warlock"
+character_id = "char_archivist"
+archetype_tags = ["ink","skill","once_per_combat"]
+trigger = "card_played"
+effects = Array[Dictionary]([{"type": "status", "status": "ink", "amount": 1, "target": "enemy"}])
+trigger_params = {"card_type_filter": "skill", "once_per_combat": true}

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "black_contract"
+display_name = "Black Contract"
+rarity = "starter"
+description = "Prototype Warlock starter relic. The first self-sacrifice each combat should draw 1 and grant 1 Energy once sacrifice triggers are implemented."
+pool_id = "warlock"
+character_id = "char_warlock"
+archetype_tags = ["sacrifice", "draw", "energy", "prototype"]
+trigger = ""
+effects = Array[Dictionary]([])
+trigger_params = {"prototype": true}

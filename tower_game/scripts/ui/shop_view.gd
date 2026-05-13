@@ -26,12 +26,13 @@ const RARITY_COLORS := {
 var _gold: int = 0
 var _panel: PanelContainer
 var _content_scroll: ScrollContainer
+var _offers_box: VBoxContainer
 var _gold_label: Label
 var _hint_label: Label
 var _card_row: HBoxContainer
 var _relic_row: HBoxContainer
 var _potion_row: HBoxContainer
-var _service_box: VBoxContainer
+var _service_box: HBoxContainer
 var _remove_button: Button
 var _leave_button: Button
 var _sold_card_ids: Dictionary = {}
@@ -97,15 +98,11 @@ func _build() -> void:
 	add_child(_panel)
 	_layout_shop()
 
-	_content_scroll = ScrollContainer.new()
-	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_panel.add_child(_content_scroll)
-
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_content_scroll.add_child(box)
+	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 10)
+	_panel.add_child(box)
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 16)
@@ -127,37 +124,48 @@ func _build() -> void:
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_hint_label)
 
+	_content_scroll = ScrollContainer.new()
+	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(_content_scroll)
+
+	_offers_box = VBoxContainer.new()
+	_offers_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_offers_box.add_theme_constant_override("separation", 10)
+	_content_scroll.add_child(_offers_box)
+
 	_card_row = HBoxContainer.new()
 	_card_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_card_row.add_theme_constant_override("separation", 16)
 	_card_row.custom_minimum_size = Vector2(0, 160)
-	box.add_child(_card_row)
+	_offers_box.add_child(_card_row)
 
 	_relic_row = HBoxContainer.new()
 	_relic_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_relic_row.add_theme_constant_override("separation", 16)
 	_relic_row.custom_minimum_size = Vector2(0, 96)
-	box.add_child(_relic_row)
+	_offers_box.add_child(_relic_row)
 
 	_potion_row = HBoxContainer.new()
 	_potion_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_potion_row.add_theme_constant_override("separation", 16)
 	_potion_row.custom_minimum_size = Vector2(0, 96)
-	box.add_child(_potion_row)
+	_offers_box.add_child(_potion_row)
 
-	_service_box = VBoxContainer.new()
+	_service_box = HBoxContainer.new()
+	_service_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	_service_box.add_theme_constant_override("separation", 8)
 	box.add_child(_service_box)
 
 	_remove_button = Button.new()
 	_remove_button.text = _tr("shop.remove", "Remove a card  -  %d gold") % 0
-	_remove_button.custom_minimum_size = Vector2(220, 40)
+	_remove_button.custom_minimum_size = Vector2(260, 42)
 	_remove_button.pressed.connect(_on_remove_pressed)
 	_service_box.add_child(_remove_button)
 
 	_leave_button = Button.new()
 	_leave_button.text = _tr("shop.leave", "Leave")
-	_leave_button.custom_minimum_size = Vector2(160, 40)
+	_leave_button.custom_minimum_size = Vector2(160, 42)
 	_leave_button.pressed.connect(func() -> void: leave_pressed.emit())
 	_service_box.add_child(_leave_button)
 	_layout_shop()
@@ -176,7 +184,8 @@ func _layout_shop() -> void:
 		_panel.offset_right = origin.x + panel_size.x
 		_panel.offset_bottom = origin.y + panel_size.y
 	if _content_scroll != null:
-		_content_scroll.custom_minimum_size = Vector2(max(760.0, panel_size.x - 36.0), max(420.0, panel_size.y - 32.0))
+		_content_scroll.custom_minimum_size = Vector2(0, 0)
+		_content_scroll.size = Vector2(max(1.0, panel_size.x - 36.0), max(1.0, panel_size.y - 32.0))
 
 
 func set_offers(gold: int, card_offers: Array, relic_offers: Array, potion_offers: Array, remove_price: int, can_remove: bool) -> void:
@@ -232,13 +241,23 @@ func _make_offer_item(offer: Dictionary, kind: String) -> Control:
 
 	var rarity := String(offer.get("rarity", "common"))
 	var border: Color = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
-	var item := PanelContainer.new()
-	item.custom_minimum_size = Vector2(168, 88)
-	item.add_theme_stylebox_override("panel", _offer_box(border))
+	var item := Button.new()
+	item.custom_minimum_size = Vector2(154, 126)
+	item.text = ""
+	item.focus_mode = Control.FOCUS_NONE
+	item.add_theme_stylebox_override("normal", _offer_box(border))
+	item.add_theme_stylebox_override("hover", _offer_box(border.lightened(0.18)))
+	item.add_theme_stylebox_override("pressed", _offer_box(border.lightened(0.30)))
 	item.set_meta("offer_id", String(offer.get("id", "")))
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = 8
+	box.offset_top = 6
+	box.offset_right = -8
+	box.offset_bottom = -6
+	box.add_theme_constant_override("separation", 3)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	item.add_child(box)
 
 	var icon_path := String(offer.get("icon_path", ""))
@@ -255,32 +274,30 @@ func _make_offer_item(offer: Dictionary, kind: String) -> Control:
 	var name_label := Label.new()
 	name_label.text = _localized_name(String(offer.get("id", "")), String(offer.get("name", "?")))
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(name_label)
 
 	var rarity_label := Label.new()
 	rarity_label.text = _tr("enum.%s" % rarity, rarity.to_upper())
 	rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rarity_label.add_theme_font_size_override("font_size", 11)
+	rarity_label.add_theme_font_size_override("font_size", 10)
 	rarity_label.add_theme_color_override("font_color", border)
+	rarity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(rarity_label)
 
 	var price := int(offer.get("price", 0))
 	var price_label := Label.new()
 	price_label.text = _tr("shop.price", "%d gold") % price
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	price_label.add_theme_font_size_override("font_size", 14)
+	price_label.add_theme_font_size_override("font_size", 12)
+	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if _gold < price:
 		price_label.add_theme_color_override("font_color", Color(1.0, 0.40, 0.32))
 	else:
 		price_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.32))
 	box.add_child(price_label)
-
-	var buy_button := Button.new()
-	buy_button.text = _tr("shop.buy", "Buy")
-	buy_button.disabled = _gold < price
-	buy_button.custom_minimum_size = Vector2(0, 28)
-	box.add_child(buy_button)
 
 	# Description tooltip when present.
 	var description := String(offer.get("description", ""))
@@ -293,22 +310,17 @@ func _make_offer_item(offer: Dictionary, kind: String) -> Control:
 		"card": sold = _sold_card_ids.has(offer_id)
 		"relic": sold = _sold_relic_ids.has(offer_id)
 		"potion": sold = _sold_potion_ids.has(offer_id)
+	item.disabled = sold or _gold < price
 	if sold:
 		_apply_sold_overlay(item)
-		buy_button.disabled = true
-		buy_button.text = _tr("shop.sold", "SOLD")
 	else:
 		match kind:
-			"card":
-				buy_button.pressed.connect(func() -> void:
-					_sold_card_ids[offer_id] = true
-					card_purchased.emit(offer_id, price))
 			"relic":
-				buy_button.pressed.connect(func() -> void:
+				item.pressed.connect(func() -> void:
 					_sold_relic_ids[offer_id] = true
 					relic_purchased.emit(offer_id, price))
 			"potion":
-				buy_button.pressed.connect(func() -> void:
+				item.pressed.connect(func() -> void:
 					_sold_potion_ids[offer_id] = true
 					potion_purchased.emit(offer_id, price))
 
@@ -323,7 +335,7 @@ func _make_card_offer_item(offer: Dictionary) -> Control:
 	var sold := _sold_card_ids.has(offer_id)
 
 	var item := PanelContainer.new()
-	item.custom_minimum_size = Vector2(132, 178)
+	item.custom_minimum_size = Vector2(132, 182)
 	item.add_theme_stylebox_override("panel", _offer_box(border))
 	item.set_meta("offer_id", offer_id)
 
@@ -335,9 +347,9 @@ func _make_card_offer_item(offer: Dictionary) -> Control:
 	var card_instance = CardInstanceScript.new()
 	card_instance.setup(offer["card_data"], false)
 	var card_view = CARD_VIEW_SCENE.instantiate()
-	card_view.setup(card_instance, 99, sold)
+	card_view.setup(card_instance, 99, sold or _gold < price)
 	card_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	if not sold:
+	if not sold and _gold >= price:
 		card_view.card_selected.connect(func(_card) -> void:
 			_sold_card_ids[offer_id] = true
 			card_purchased.emit(offer_id, price))
@@ -354,20 +366,10 @@ func _make_card_offer_item(offer: Dictionary) -> Control:
 	price_label.add_theme_color_override("font_color", Color(1.0, 0.40, 0.32) if _gold < price else Color(1.0, 0.82, 0.32))
 	footer.add_child(price_label)
 
-	var buy_button := Button.new()
-	buy_button.text = _tr("shop.buy", "Buy")
-	buy_button.disabled = sold or _gold < price
-	buy_button.custom_minimum_size = Vector2(52, 26)
-	buy_button.pressed.connect(func() -> void:
-		_sold_card_ids[offer_id] = true
-		card_purchased.emit(offer_id, price))
-	footer.add_child(buy_button)
-
 	var description := String(offer.get("description", ""))
 	if description != "":
 		item.tooltip_text = description
 	if sold:
-		buy_button.text = _tr("shop.sold", "SOLD")
 		_apply_sold_overlay(item)
 	return item
 

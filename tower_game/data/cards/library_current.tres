@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "library_current"
+display_name = "Library Current"
+card_type = "skill"
+rarity = "uncommon"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["energy", "exhaust"]
+keyword_tags = ["energy"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 0
+description = "Gain 2 Energy. Exhaust."
+upgraded_description = "Gain 2 Energy. Draw 1. Exhaust."
+effects = Array[Dictionary]([{"type": "energy", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "energy", "amount": 2}, {"type": "draw", "amount": 1}])
+exhaust_on_play = true
+card_target = "self"

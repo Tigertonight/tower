@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/character_data.gd" id="1_character_data"]
+
+[resource]
+script = ExtResource("1_character_data")
+id = "char_warlock"
+display_name = "The Warlock"
+subtitle = "A contract scribe who spends blood, curses, and borrowed futures."
+class_id = "warlock"
+class_display_name = "Warlock"
+card_pool_id = "warlock"
+class_trait_summary = "Pays HP and deck purity for explosive forbidden effects."
+class_keywords = ["Hex", "Curse", "Sacrifice", "Doom"]
+is_playable = false
+theme_color = Color(0.55, 0.28, 0.70, 1)
+starting_hp = 70
+starting_relic_id = "black_contract"
+starter_deck = ["strike_form", "strike_form", "strike_form", "strike_form", "guard_form", "guard_form", "guard_form", "guard_form", "ink_blot", "staining_hand", "deep_breath", "quiet_revision"]
+sprite_path = "res://art/generated/sprites/warlock.png"

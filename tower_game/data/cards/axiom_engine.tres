@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "axiom_engine"
+display_name = "Axiom Engine"
+card_type = "power"
+rarity = "rare"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["power", "energy", "scaling"]
+keyword_tags = ["strength", "energy"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Gain 2 Strength. Gain 1 Energy."
+upgraded_description = "Gain 3 Strength. Gain 1 Energy."
+effects = Array[Dictionary]([{"type": "strength", "amount": 2}, {"type": "energy", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "strength", "amount": 3}, {"type": "energy", "amount": 1}])
+card_target = "self"

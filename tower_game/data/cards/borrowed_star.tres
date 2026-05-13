@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "borrowed_star"
+display_name = "Borrowed Star"
+card_type = "attack"
+rarity = "common"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["spell_damage", "attack"]
+keyword_tags = []
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Deal 14 damage."
+upgraded_description = "Deal 18 damage."
+effects = Array[Dictionary]([{"type": "damage", "amount": 14}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 18}])

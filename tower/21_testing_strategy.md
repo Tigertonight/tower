@@ -13,6 +13,8 @@ This document defines how the Godot implementation is tested across smoke, unit,
 3. Provide a balance simulator so 30 cards × 10 relics can be tuned without 1000 manual runs.
 4. Keep the bar for adding tests low so contributors actually write them.
 
+Card-pool expansion has a dedicated playability regression plan in `31_card_playability_regression_plan.md`. Use that document whenever card counts, card pools, character-exclusive cards, public cards, status/curse/generated cards, reward generation, shop offers, or transform logic changes.
+
 ## Test Layers
 
 ### 1. Smoke (already present)

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "blackboard_sun"
+display_name = "Blackboard Sun"
+card_type = "attack"
+rarity = "rare"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["multi_hit", "debuff", "rare"]
+keyword_tags = ["vulnerable"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Deal 12 damage 2 times. Apply 2 Vulnerable."
+upgraded_description = "Deal 16 damage 2 times. Apply 2 Vulnerable."
+effects = Array[Dictionary]([{"type": "damage", "amount": 12}, {"type": "damage", "amount": 12}, {"type": "status", "status": "vulnerable", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 16}, {"type": "damage", "amount": 16}, {"type": "status", "status": "vulnerable", "amount": 2}])

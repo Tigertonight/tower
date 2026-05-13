@@ -194,23 +194,23 @@ static func _assign_encounters(layers: Array, rng: RandomNumberGenerator, act_in
 	# packs to telegraph escalation.
 	match act_index:
 		2:
-			early = ["e_glassed_intern", "e_late_filer", "e_glassed_intern+e_late_filer"]
-			mid = ["e_silent_ledger", "e_dust_sentinel", "e_glassed_intern", "e_dust_sentinel+e_glassed_intern"]
-			late = ["e_dust_sentinel", "e_red_string_imp", "e_silent_ledger", "e_silent_ledger+e_red_string_imp"]
-			elites = ["el_quill_judge", "el_ironbound_clerk"]
-			boss = "b_chronicler_of_lost_pages"
+			early = ["e_glassed_intern", "e_late_filer", "e_ink_moth", "e_glassed_intern+e_late_filer"]
+			mid = ["e_silent_ledger", "e_dust_sentinel", "e_clause_mender", "e_ink_moth+e_clause_mender", "e_dust_sentinel+e_glassed_intern"]
+			late = ["e_ledger_sentry", "e_red_string_imp", "e_silent_ledger", "e_clause_mender+e_ledger_sentry", "e_silent_ledger+e_red_string_imp"]
+			elites = ["el_quill_judge", "el_ironbound_clerk", "el_penitent_index"]
+			boss = _pick_id(["b_chronicler_of_lost_pages", "b_mirror_tribunal"], rng)
 		3:
-			early = ["e_late_filer", "e_silent_ledger", "e_late_filer+e_silent_ledger"]
-			mid = ["e_dust_sentinel", "e_red_string_imp", "e_burnt_courier", "e_red_string_imp+e_burnt_courier"]
-			late = ["e_red_string_imp", "e_burnt_courier", "e_dust_sentinel", "e_dust_sentinel+e_burnt_courier+e_red_string_imp"]
-			elites = ["el_archive_warden", "el_ironbound_clerk"]
-			boss = "b_grand_archivist"
+			early = ["e_late_filer", "e_null_page", "e_silent_ledger", "e_late_filer+e_null_page"]
+			mid = ["e_dust_sentinel", "e_redaction_monk", "e_burnt_courier", "e_redaction_monk+e_burnt_courier", "e_null_page+e_dust_sentinel"]
+			late = ["e_keyhole_mimic", "e_red_string_imp", "e_burnt_courier", "e_keyhole_mimic+e_redaction_monk", "e_dust_sentinel+e_burnt_courier+e_red_string_imp"]
+			elites = ["el_archive_warden", "el_null_librarian", "el_redaction_engine"]
+			boss = _pick_id(["b_grand_archivist", "b_last_catalog"], rng)
 		_:
-			early = ["e_dust_scribe", "e_loose_folio", "e_dust_scribe+e_loose_folio"]
-			mid = ["e_loose_folio", "e_wax_acolyte", "e_margin_hound", "e_loose_folio+e_dust_scribe"]
-			late = ["e_wax_acolyte", "e_margin_hound", "e_burnt_courier", "e_wax_acolyte+e_margin_hound"]
-			elites = ["el_wax_sentinel", "el_first_clause"]
-			boss = "b_sealed_curator"
+			early = ["e_dust_scribe", "e_loose_folio", "e_index_rat", "e_dust_scribe+e_loose_folio"]
+			mid = ["e_loose_folio", "e_wax_acolyte", "e_margin_hound", "e_staple_swarm", "e_loose_folio+e_index_rat"]
+			late = ["e_wax_acolyte", "e_margin_hound", "e_burnt_courier", "e_staple_swarm+e_margin_hound", "e_wax_acolyte+e_margin_hound"]
+			elites = ["el_wax_sentinel", "el_first_clause", "el_dust_chorus"]
+			boss = _pick_id(["b_sealed_curator", "b_ink_tyrant"], rng)
 	for layer_index in layers.size():
 		for node_index in layers[layer_index].size():
 			var node_type := String(layers[layer_index][node_index]["type"])
@@ -223,9 +223,15 @@ static func _assign_encounters(layers: Array, rng: RandomNumberGenerator, act_in
 						pool = late
 					layers[layer_index][node_index]["encounter_id"] = pool[rng.randi_range(0, pool.size() - 1)]
 				"elite":
-					layers[layer_index][node_index]["encounter_id"] = elites[rng.randi_range(0, elites.size() - 1)]
+					layers[layer_index][node_index]["encounter_id"] = _pick_id(elites, rng)
 				"boss":
 					layers[layer_index][node_index]["encounter_id"] = boss
+
+
+static func _pick_id(ids: Array, rng: RandomNumberGenerator) -> String:
+	if ids.is_empty():
+		return ""
+	return String(ids[rng.randi_range(0, ids.size() - 1)])
 
 
 static func _title_for_type(node_type: String) -> String:

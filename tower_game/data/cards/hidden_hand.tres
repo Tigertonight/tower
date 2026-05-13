@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "hidden_hand"
+display_name = "Hidden Hand"
+card_type = "attack"
+rarity = "uncommon"
+pool_id = "assassin"
+character_id = "char_assassin"
+archetype_tags = ["tempo", "draw", "attack"]
+keyword_tags = ["draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Deal 6 damage. Draw 2."
+upgraded_description = "Deal 8 damage. Draw 2."
+effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "draw", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 8}, {"type": "draw", "amount": 2}])

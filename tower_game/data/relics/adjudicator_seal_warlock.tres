@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+[resource]
+script = ExtResource("1_relic_data")
+id = "adjudicator_seal_warlock"
+display_name = "Adjudicator Seal"
+rarity = "rare"
+description = "At the start of combat, apply 1 Weak to the target."
+pool_id = "warlock"
+character_id = "char_archivist"
+archetype_tags = ["weak","combat_start","seal_control"]
+trigger = "combat_start"
+effects = Array[Dictionary]([{"type": "status", "status": "weak", "amount": 1, "target": "enemy"}])

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "wet_signature"
+display_name = "Wet Signature"
+card_type = "attack"
+rarity = "common"
+pool_id = "archivist"
+character_id = "char_archivist"
+archetype_tags = ["ink_ledger","seal_control","ink","weak"]
+keyword_tags = ["ink","weak"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Deal 6 damage. Apply 1 Ink and 1 Weak."
+upgraded_description = "Deal 8 damage. Apply 2 Ink and 1 Weak."
+effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "status", "status": "ink", "amount": 1}, {"type": "status", "status": "weak", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 8}, {"type": "status", "status": "ink", "amount": 2}, {"type": "status", "status": "weak", "amount": 1}])

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "final_angle"
+display_name = "Final Angle"
+card_type = "attack"
+rarity = "rare"
+pool_id = "assassin"
+character_id = "char_assassin"
+archetype_tags = ["mark", "finisher"]
+keyword_tags = ["vulnerable"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Deal 22 damage. Apply 2 Vulnerable."
+upgraded_description = "Deal 30 damage. Apply 2 Vulnerable."
+effects = Array[Dictionary]([{"type": "damage", "amount": 22}, {"type": "status", "status": "vulnerable", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 30}, {"type": "status", "status": "vulnerable", "amount": 2}])

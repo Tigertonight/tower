@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+[resource]
+script = ExtResource("1_relic_data")
+id = "silent_boot"
+display_name = "Silent Boot"
+rarity = "common"
+description = "Every fourth card you play deals 4 damage to an enemy."
+pool_id = "assassin"
+character_id = "char_assassin"
+archetype_tags = ["tempo", "damage"]
+trigger = "card_played"
+effects = Array[Dictionary]([{"type": "damage", "amount": 4, "target": "enemy"}])
+trigger_params = {"every_n": 4}

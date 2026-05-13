@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "ink_wash"
+display_name = "Ink Wash"
+card_type = "skill"
+rarity = "common"
+pool_id = "archivist"
+character_id = "char_archivist"
+archetype_tags = ["ink_ledger","ink","aoe","exhaust"]
+keyword_tags = ["ink","exhaust"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Apply 2 Ink to ALL enemies. Exhaust."
+upgraded_description = "Apply 3 Ink to ALL enemies. Exhaust."
+effects = Array[Dictionary]([{"type": "status_all_enemies", "status": "ink", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "status_all_enemies", "status": "ink", "amount": 3}])
+exhaust_on_play = true
+card_target = "all_enemies"

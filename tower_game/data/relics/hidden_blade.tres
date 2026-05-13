@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+
+[resource]
+script = ExtResource("1_relic_data")
+id = "hidden_blade"
+display_name = "Hidden Blade"
+rarity = "starter"
+description = "Prototype Assassin starter relic. The first Attack each combat should apply Mark once Mark exists."
+pool_id = "assassin"
+character_id = "char_assassin"
+archetype_tags = ["mark", "attack", "once_per_combat", "prototype"]
+trigger = ""
+effects = Array[Dictionary]([])
+trigger_params = {"prototype": true}

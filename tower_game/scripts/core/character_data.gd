@@ -15,6 +15,12 @@ extends Resource
 @export var id: String = ""
 @export var display_name: String = ""
 @export var subtitle: String = ""
+@export var class_id: String = ""
+@export var class_display_name: String = ""
+@export var card_pool_id: String = ""
+@export var class_trait_summary: String = ""
+@export var class_keywords: Array = []
+@export var is_playable: bool = true
 @export var theme_color: Color = Color(0.85, 0.66, 0.36)
 @export var starting_hp: int = 76
 @export var starting_relic_id: String = "sealed_badge"

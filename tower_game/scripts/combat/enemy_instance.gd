@@ -132,7 +132,7 @@ func _scaled_damage(base_damage: int) -> int:
 	return int(round(float(base_damage) * damage_multiplier))
 
 
-func resolve_intent(combat: Node) -> String:
+func resolve_intent(combat: Variant) -> String:
 	if current_move == null:
 		return "%s hesitates." % display_name
 	if current_move.block > 0:

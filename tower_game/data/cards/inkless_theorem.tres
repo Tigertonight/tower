@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "inkless_theorem"
+display_name = "Inkless Theorem"
+card_type = "power"
+rarity = "uncommon"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["power", "spell_damage", "scaling"]
+keyword_tags = ["strength"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Gain 2 Strength."
+upgraded_description = "Gain 3 Strength."
+effects = Array[Dictionary]([{"type": "strength", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "strength", "amount": 3}])
+card_target = "self"

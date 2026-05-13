@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "core_spark"
+display_name = "Core Spark"
+card_type = "attack"
+rarity = "common"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["charge_tempo", "attack", "energy"]
+keyword_tags = ["energy"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Deal 6 damage. Gain 1 Energy."
+upgraded_description = "Deal 8 damage. Gain 1 Energy."
+effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "energy", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 8}, {"type": "energy", "amount": 1}])

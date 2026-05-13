@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "el_dust_chorus"
+display_name = "Dust Chorus"
+tier = "elite"
+max_hp = 78
+art_path = "res://art/generated/sprites/dust_chorus.png"
+move_pool = Array[Dictionary]([{"move_id": "mv_chorus_screech", "weight": 2, "max_in_row": 1}, {"move_id": "mv_chorus_peck", "weight": 4, "max_in_row": 1}, {"move_id": "mv_chorus_gather", "weight": 2, "max_in_row": 1}])
+opener_move_ids = Array[String](["mv_chorus_screech"])
+phase_hp_below_pct = 0.5
+phase_enter_effects = Array[Dictionary]([{"type": "strength", "amount": 2}])

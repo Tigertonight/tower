@@ -5,6 +5,9 @@ extends Resource
 @export var display_name: String = ""
 @export var rarity: String = "common"
 @export var description: String = ""
+@export var pool_id: String = "public"
+@export var character_id: String = ""
+@export var archetype_tags: Array = []
 @export var trigger: String = ""
 @export var effects: Array[Dictionary] = []
 # Optional dispatch filters / counters consumed by RelicManager.trigger().

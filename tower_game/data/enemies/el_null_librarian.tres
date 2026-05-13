@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/enemy_data.gd" id="1_enemy_data"]
+
+[resource]
+script = ExtResource("1_enemy_data")
+id = "el_null_librarian"
+display_name = "Null Librarian"
+tier = "elite"
+max_hp = 108
+art_path = "res://art/generated/sprites/null_librarian.png"
+move_pool = Array[Dictionary]([{"move_id": "mv_null_command", "weight": 2, "max_in_row": 1}, {"move_id": "mv_void_checkout", "weight": 4, "max_in_row": 2}, {"move_id": "mv_silent_catalogue", "weight": 2, "max_in_row": 1}])
+opener_move_ids = Array[String](["mv_null_command"])
+phase_hp_below_pct = 0.5
+phase_enter_effects = Array[Dictionary]([{"type": "block", "amount": 18}, {"type": "strength", "amount": 2}])

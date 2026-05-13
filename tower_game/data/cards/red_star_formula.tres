@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "red_star_formula"
+display_name = "Red Star Formula"
+card_type = "skill"
+rarity = "rare"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["formula", "draw"]
+keyword_tags = ["draw", "discard"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Draw 4. Discard 1 random card."
+upgraded_description = "Draw 5. Discard 1 random card."
+effects = Array[Dictionary]([{"type": "draw", "amount": 4}, {"type": "discard_random_card", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "draw", "amount": 5}, {"type": "discard_random_card", "amount": 1}])
+card_target = "self"

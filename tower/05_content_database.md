@@ -10,9 +10,10 @@ This document is the single source of truth for designed content. Detailed mecha
 
 | ID | Name | Role | Core Mechanic | Status | Source |
 | --- | --- | --- | --- | --- | --- |
-| `char_vanguard` | Vanguard Archivist | Balanced attacker/defender | Guard, Momentum, Retaliate | In implementation | `09_first_character_design.md` |
-| `char_shadow` | Shadow Operator | Combo and poison | Combo points, poison, discard | Concept (post-MVP) | – |
-| `char_core` | Core Engineer | Modules and charge | Module slots, charge | Concept (post-MVP) | – |
+| `char_vanguard` | Warrior / Vanguard Archivist | Durable attacker/defender | Guard, Momentum, Strength, Exhaust | In implementation | `09_first_character_design.md`, `32_four_character_roster_design.md` |
+| `char_archivist` | Warlock candidate / Hex Archivist | Forbidden contracts and delayed damage | Ink/Hex, Sacrifice, Curse, Doom | In implementation, needs migration | `30_card_character_system_design.md`, `32_four_character_roster_design.md` |
+| `char_assassin` | Assassin / Shadow Operator | Combo and precision kills | Mark, Combo, Poison/Bleed, Discard | Planned | `32_four_character_roster_design.md` |
+| `char_mage` | Mage / Core Arcanist | Spell engine and burst turns | Charge, Focus, Generated Spells | Planned | `32_four_character_roster_design.md` |
 
 ## Cards (Vanguard Archivist — MVP set, 30 cards)
 

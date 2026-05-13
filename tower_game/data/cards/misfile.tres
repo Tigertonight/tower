@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "misfile"
+display_name = "Misfile"
+card_type = "skill"
+rarity = "uncommon"
+pool_id = "archivist"
+character_id = "char_archivist"
+archetype_tags = ["page_flow","discard","energy","draw"]
+keyword_tags = ["energy","draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 0
+description = "Discard 1 random card. Gain 1 Energy. Draw 1."
+upgraded_description = "Discard 1 random card. Gain 1 Energy. Draw 2."
+effects = Array[Dictionary]([{"type": "discard_random_card", "amount": 1}, {"type": "energy", "amount": 1}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "discard_random_card", "amount": 1}, {"type": "energy", "amount": 1}, {"type": "draw", "amount": 2}])
+card_target = "self"

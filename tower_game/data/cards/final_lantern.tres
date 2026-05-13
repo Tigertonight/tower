@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "final_lantern"
+display_name = "Final Lantern"
+card_type = "skill"
+rarity = "rare"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["energy", "exhaust", "rare"]
+keyword_tags = ["energy", "draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Gain 3 Energy. Draw 2. Exhaust."
+upgraded_description = "Gain 3 Energy. Draw 3. Exhaust."
+effects = Array[Dictionary]([{"type": "energy", "amount": 3}, {"type": "draw", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "energy", "amount": 3}, {"type": "draw", "amount": 3}])
+exhaust_on_play = true
+card_target = "self"

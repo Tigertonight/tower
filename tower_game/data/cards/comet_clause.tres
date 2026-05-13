@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "comet_clause"
+display_name = "Comet Clause"
+card_type = "attack"
+rarity = "uncommon"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["aoe", "spell_damage"]
+keyword_tags = []
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Deal 10 damage to ALL enemies."
+upgraded_description = "Deal 14 damage to ALL enemies."
+effects = Array[Dictionary]([{"type": "damage_all_enemies", "amount": 10}])
+upgraded_effects = Array[Dictionary]([{"type": "damage_all_enemies", "amount": 14}])
+card_target = "all_enemies"

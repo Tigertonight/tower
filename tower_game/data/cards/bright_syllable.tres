@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "bright_syllable"
+display_name = "Bright Syllable"
+card_type = "attack"
+rarity = "uncommon"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["formula", "exhaust", "attack"]
+keyword_tags = ["draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 0
+description = "Deal 4 damage. Draw 1. Exhaust."
+upgraded_description = "Deal 6 damage. Draw 1. Exhaust."
+effects = Array[Dictionary]([{"type": "damage", "amount": 4}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "draw", "amount": 1}])
+exhaust_on_play = true

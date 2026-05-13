@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "orbital_lock"
+display_name = "Orbital Lock"
+card_type = "skill"
+rarity = "uncommon"
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["ward", "aoe", "control"]
+keyword_tags = ["block", "weak"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 2
+description = "Gain 10 Block. Apply 2 Weak to ALL enemies."
+upgraded_description = "Gain 14 Block. Apply 2 Weak to ALL enemies."
+effects = Array[Dictionary]([{"type": "block", "amount": 10}, {"type": "status_all_enemies", "status": "weak", "amount": 2}])
+upgraded_effects = Array[Dictionary]([{"type": "block", "amount": 14}, {"type": "status_all_enemies", "status": "weak", "amount": 2}])
+card_target = "all_enemies"

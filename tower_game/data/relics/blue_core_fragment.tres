@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/relics/relic_data.gd" id="1_relic_data"]
+[resource]
+script = ExtResource("1_relic_data")
+id = "blue_core_fragment"
+display_name = "Blue Core Fragment"
+rarity = "rare"
+description = "The first time you fall below half HP each combat, gain 2 Strength and 2 Dexterity."
+pool_id = "mage"
+character_id = "char_mage"
+archetype_tags = ["hp_threshold", "scaling"]
+trigger = "hp_threshold"
+effects = Array[Dictionary]([{"type": "strength", "amount": 2}, {"type": "dexterity", "amount": 2}])
+trigger_params = {"hp_below_pct": 0.5}

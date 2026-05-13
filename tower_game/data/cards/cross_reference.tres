@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "cross_reference"
+display_name = "Cross Reference"
+card_type = "attack"
+rarity = "uncommon"
+pool_id = "archivist"
+character_id = "char_archivist"
+archetype_tags = ["marginalia","draw"]
+keyword_tags = ["draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 1
+description = "Deal 7 damage. Draw 1."
+upgraded_description = "Deal 10 damage. Draw 1."
+effects = Array[Dictionary]([{"type": "damage", "amount": 7}, {"type": "draw", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 10}, {"type": "draw", "amount": 1}])

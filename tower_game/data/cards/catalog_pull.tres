@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/cards/card_data.gd" id="1_card_data"]
+[resource]
+script = ExtResource("1_card_data")
+id = "catalog_pull"
+display_name = "Catalog Pull"
+card_type = "skill"
+rarity = "common"
+pool_id = "archivist"
+character_id = "char_archivist"
+archetype_tags = ["page_flow","draw","discard"]
+keyword_tags = ["draw"]
+rewardable = true
+shop_weight = 1
+reward_weight = 1
+unlock_tier = 0
+cost = 0
+description = "Draw 1. Discard 1 random card."
+upgraded_description = "Draw 2. Discard 1 random card."
+effects = Array[Dictionary]([{"type": "draw", "amount": 1}, {"type": "discard_random_card", "amount": 1}])
+upgraded_effects = Array[Dictionary]([{"type": "draw", "amount": 2}, {"type": "discard_random_card", "amount": 1}])
+card_target = "self"
