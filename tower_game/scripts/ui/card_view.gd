@@ -11,7 +11,10 @@ const KeywordCatalogScript := preload("res://scripts/core/keyword_catalog.gd")
 var card
 var rest_position := Vector2.ZERO
 var rest_rotation := 0.0
+var rest_z_index := 0
 var rest_pose_locked := false
+var hover_lift_enabled := true
+var hover_preview_disabled_cards := true
 var cost_label: Label
 var rarity_label: Label
 var name_label: Label
@@ -37,6 +40,7 @@ func setup(card_instance, available_energy: int, disabled_by_state: bool) -> voi
 	card = card_instance
 	rest_position = position
 	rest_rotation = rotation
+	rest_z_index = z_index
 	rest_pose_locked = false
 	pivot_offset = CARD_SIZE * 0.5
 	custom_minimum_size = CARD_SIZE
@@ -201,18 +205,20 @@ func _loc():
 
 
 func _on_mouse_entered() -> void:
-	if disabled:
+	if disabled and not hover_preview_disabled_cards:
 		return
 	if not rest_pose_locked:
 		rest_position = position
 		rest_rotation = rotation
+		rest_z_index = z_index
 	z_index = 200
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_QUAD)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", Vector2(1.28, 1.28), 0.11)
-	tween.parallel().tween_property(self, "position", rest_position + Vector2(0, -56), 0.11)
-	tween.parallel().tween_property(self, "rotation", 0.0, 0.11)
+	if hover_lift_enabled and not disabled:
+		var tween := create_tween()
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.set_ease(Tween.EASE_OUT)
+		tween.tween_property(self, "scale", Vector2(1.28, 1.28), 0.11)
+		tween.parallel().tween_property(self, "position", rest_position + Vector2(0, -32), 0.11)
+		tween.parallel().tween_property(self, "rotation", 0.0, 0.11)
 	# Anchor for the inspector overlay = top-center of the resting card,
 	# in global (viewport) coordinates so the inspector can position itself
 	# regardless of where this CardView lives in the tree.
@@ -221,19 +227,25 @@ func _on_mouse_entered() -> void:
 
 
 func _on_mouse_exited() -> void:
-	z_index = 0
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_QUAD)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", Vector2.ONE, 0.10)
-	tween.parallel().tween_property(self, "position", rest_position, 0.10)
-	tween.parallel().tween_property(self, "rotation", rest_rotation, 0.10)
+	z_index = rest_z_index
+	if hover_lift_enabled:
+		var tween := create_tween()
+		tween.set_trans(Tween.TRANS_QUAD)
+		tween.set_ease(Tween.EASE_OUT)
+		tween.tween_property(self, "scale", Vector2.ONE, 0.10)
+		tween.parallel().tween_property(self, "position", rest_position, 0.10)
+		tween.parallel().tween_property(self, "rotation", rest_rotation, 0.10)
 	card_unhovered.emit(card)
+
+
+func set_hover_lift_enabled(enabled: bool) -> void:
+	hover_lift_enabled = enabled
 
 
 func set_rest_pose(pos: Vector2, rot: float, layer: int) -> void:
 	rest_position = pos
 	rest_rotation = rot
+	rest_z_index = layer
 	rest_pose_locked = true
 	position = pos
 	rotation = rot

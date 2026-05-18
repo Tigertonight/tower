@@ -381,6 +381,8 @@ func _make_card_offer_item(offer: Dictionary) -> Control:
 	card_instance.setup(offer["card_data"], false)
 	var card_view = CARD_VIEW_SCENE.instantiate()
 	card_view.setup(card_instance, 99, sold or _gold < price)
+	if card_view.has_method("set_hover_lift_enabled"):
+		card_view.set_hover_lift_enabled(false)
 	card_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	if not sold and _gold >= price:
 		card_view.card_selected.connect(func(_card) -> void:

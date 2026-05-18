@@ -101,7 +101,7 @@ func _build() -> void:
 	box.add_child(scroll)
 
 	grid = GridContainer.new()
-	grid.columns = 7
+	grid.columns = 5
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 10)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -144,6 +144,8 @@ func show_picker(p_title: String, p_hint: String, cards: Array, predicate: Calla
 
 		var card_view = CARD_VIEW_SCENE.instantiate()
 		card_view.setup(inst, 99, not pickable)
+		if card_view.has_method("set_hover_lift_enabled"):
+			card_view.set_hover_lift_enabled(false)
 		card_view.card_hovered.connect(_on_card_hovered)
 		card_view.card_unhovered.connect(_on_card_unhovered)
 		var captured_index := source_index

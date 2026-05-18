@@ -1333,6 +1333,8 @@ func _make_card(card_entry: String):
 func _on_card_pressed(card) -> void:
 	if _animating:
 		return
+	if card_inspector != null:
+		card_inspector.hide_card(null)
 	if _all_enemies_dead() or player_hp <= 0 or (reward_screen != null and reward_screen.visible):
 		return
 	if card.is_unplayable():
@@ -2252,6 +2254,8 @@ func _update_ui() -> void:
 	end_turn_button.disabled = _all_enemies_dead() or player_hp <= 0
 	hand_section_label.text = _tr("combat.resolving", "Resolving card...") if _animating else _tr("combat.hand", "Hand - click a card to play it. Energy left: %d") % player_energy
 
+	if card_inspector != null:
+		card_inspector.hide_card(null)
 	for child in hand_box.get_children():
 		child.queue_free()
 

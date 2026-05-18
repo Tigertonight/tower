@@ -178,6 +178,8 @@ func show_rewards(cards: Array) -> void:
 			slot.add_child(glow)
 		var card_view = CARD_VIEW_SCENE.instantiate()
 		card_view.setup(instance, 99, false)
+		if card_view.has_method("set_hover_lift_enabled"):
+			card_view.set_hover_lift_enabled(false)
 		card_view.position = Vector2.ZERO
 		card_view.rotation = 0.0
 		card_view.scale = Vector2(0.82, 0.82)
