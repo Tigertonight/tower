@@ -10,6 +10,7 @@ signal cancelled
 
 const CARD_VIEW_SCENE := preload("res://scenes/combat/card_view.tscn")
 const CardInstanceScript := preload("res://scripts/cards/card_instance.gd")
+const CardInspectorScript := preload("res://scripts/ui/card_inspector.gd")
 
 var dim: ColorRect
 var panel: PanelContainer
@@ -18,6 +19,7 @@ var hint_label: Label
 var grid: GridContainer
 var scroll: ScrollContainer
 var cancel_button: Button
+var card_inspector
 
 var _entries: Array = []  # array of {card: CardInstance, index: int}
 
@@ -105,6 +107,9 @@ func _build() -> void:
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(grid)
 
+	card_inspector = CardInspectorScript.new()
+	add_child(card_inspector)
+
 
 # `cards` may be CardInstance objects, CardData resources, or strings of card ids
 # accompanied by `card_database` for lookup. We accept already-prepared CardInstance.
@@ -139,6 +144,8 @@ func show_picker(p_title: String, p_hint: String, cards: Array, predicate: Calla
 
 		var card_view = CARD_VIEW_SCENE.instantiate()
 		card_view.setup(inst, 99, not pickable)
+		card_view.card_hovered.connect(_on_card_hovered)
+		card_view.card_unhovered.connect(_on_card_unhovered)
 		var captured_index := source_index
 		var captured_card = inst
 		if pickable:
@@ -150,6 +157,8 @@ func show_picker(p_title: String, p_hint: String, cards: Array, predicate: Calla
 
 	visible = true
 	move_to_front()
+	if card_inspector != null:
+		card_inspector.move_to_front()
 
 
 func _localized_title(text: String) -> String:
@@ -192,7 +201,6 @@ func _layout_modal() -> void:
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		viewport_size = Vector2(1280, 720)
-	size = viewport_size
 	var panel_size := Vector2(min(900.0, viewport_size.x - 80.0), min(540.0, viewport_size.y - 70.0))
 	var origin := (viewport_size - panel_size) * 0.5
 	panel.offset_left = origin.x
@@ -205,12 +213,28 @@ func _layout_modal() -> void:
 
 func _on_card_picked(card_instance, source_index: int) -> void:
 	visible = false
+	if card_inspector != null:
+		card_inspector.hide_card(card_instance)
 	picked.emit(card_instance, source_index)
 
 
 func _on_cancel_pressed() -> void:
 	visible = false
+	if card_inspector != null:
+		card_inspector.visible = false
 	cancelled.emit()
+
+
+func _on_card_hovered(card_instance, anchor_position: Vector2) -> void:
+	if card_inspector == null:
+		return
+	card_inspector.show_card(card_instance, anchor_position)
+
+
+func _on_card_unhovered(card_instance) -> void:
+	if card_inspector == null:
+		return
+	card_inspector.hide_card(card_instance)
 
 
 func _on_dim_input(event: InputEvent) -> void:

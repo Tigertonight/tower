@@ -61,7 +61,7 @@ func _build() -> void:
 		return
 
 	dim = ColorRect.new()
-	dim.color = Color(0.0, 0.0, 0.0, 0.7)
+	dim.color = Color(0.0, 0.0, 0.0, 0.76)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	dim.gui_input.connect(_on_dim_input)
@@ -74,7 +74,7 @@ func _build() -> void:
 	_layout_modal()
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 9)
 	panel.add_child(box)
 
 	var header := HBoxContainer.new()
@@ -85,11 +85,14 @@ func _build() -> void:
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_label.text = _tr("modal.deck_title", "Deck")
 	title_label.add_theme_font_size_override("font_size", 22)
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.58))
 	header.add_child(title_label)
 
 	close_button = Button.new()
 	close_button.text = _tr("modal.close", "Close")
 	close_button.custom_minimum_size = Vector2(96, 36)
+	close_button.add_theme_stylebox_override("normal", _button_box(Color(0.070, 0.058, 0.044, 0.86), Color(0.58, 0.42, 0.20, 0.86)))
+	close_button.add_theme_stylebox_override("hover", _button_box(Color(0.095, 0.070, 0.048, 0.96), Color(0.90, 0.64, 0.28, 1.0)))
 	close_button.pressed.connect(_on_close_pressed)
 	header.add_child(close_button)
 
@@ -107,6 +110,9 @@ func _build() -> void:
 		btn.text = _sort_label(sort_key)
 		btn.toggle_mode = true
 		btn.custom_minimum_size = Vector2(140, 32)
+		btn.add_theme_stylebox_override("normal", _button_box(Color(0.048, 0.044, 0.038, 0.70), Color(0.34, 0.29, 0.22, 0.80)))
+		btn.add_theme_stylebox_override("hover", _button_box(Color(0.070, 0.058, 0.044, 0.88), Color(0.70, 0.52, 0.24, 0.92)))
+		btn.add_theme_stylebox_override("pressed", _button_box(Color(0.090, 0.068, 0.046, 0.94), Color(0.94, 0.68, 0.30, 1.0)))
 		var captured: String = sort_key
 		btn.pressed.connect(func() -> void: _set_sort(captured))
 		sort_buttons[sort_key] = btn
@@ -153,7 +159,6 @@ func _layout_modal() -> void:
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		viewport_size = Vector2(1280, 720)
-	size = viewport_size
 	var panel_size := Vector2(min(960.0, viewport_size.x - 80.0), min(600.0, viewport_size.y - 70.0))
 	var origin := (viewport_size - panel_size) * 0.5
 	panel.offset_left = origin.x
@@ -251,8 +256,8 @@ func _on_dim_input(event: InputEvent) -> void:
 
 func _frame_box() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.06, 0.06, 0.07, 0.96)
-	style.border_color = Color(0.74, 0.56, 0.27)
+	style.bg_color = Color(0.050, 0.042, 0.034, 0.96)
+	style.border_color = Color(0.78, 0.58, 0.26)
 	style.set_border_width_all(2)
 	style.corner_radius_top_left = 10
 	style.corner_radius_top_right = 10
@@ -262,4 +267,16 @@ func _frame_box() -> StyleBoxFlat:
 	style.content_margin_right = 18
 	style.content_margin_top = 14
 	style.content_margin_bottom = 14
+	return style
+
+
+func _button_box(bg: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
 	return style

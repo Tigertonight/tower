@@ -6,12 +6,15 @@ signal skipped
 
 const CardInstanceScript := preload("res://scripts/cards/card_instance.gd")
 const CARD_VIEW_SCENE := preload("res://scenes/combat/card_view.tscn")
+const CardInspectorScript := preload("res://scripts/ui/card_inspector.gd")
 
 var content_box: VBoxContainer
 var card_box: HBoxContainer
 var panel: PanelContainer
 var frame_art: TextureRect
 var skip_button: Button
+var card_inspector
+var reveal_label: Label
 
 
 func _loc():
@@ -83,6 +86,7 @@ func _build_ui() -> void:
 	title.text = _tr("reward.title", "Archive Spoils")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.58))
 	content_box.add_child(title)
 
 	var gold_line := Label.new()
@@ -97,6 +101,13 @@ func _build_ui() -> void:
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content_box.add_child(hint)
 
+	reveal_label = Label.new()
+	reveal_label.text = _tr("reward.reveal", "Unseal one record")
+	reveal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reveal_label.add_theme_font_size_override("font_size", 14)
+	reveal_label.add_theme_color_override("font_color", Color(0.90, 0.74, 0.42))
+	content_box.add_child(reveal_label)
+
 	card_box = HBoxContainer.new()
 	card_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	card_box.add_theme_constant_override("separation", 18)
@@ -109,10 +120,17 @@ func _build_ui() -> void:
 
 	skip_button = Button.new()
 	skip_button.text = _tr("reward.skip", "Skip Reward (+25 gold)")
-	skip_button.custom_minimum_size = Vector2(320, 48)
+	skip_button.custom_minimum_size = Vector2(260, 38)
 	skip_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	skip_button.add_theme_font_size_override("font_size", 13)
+	skip_button.add_theme_stylebox_override("normal", _skip_box(Color(0.050, 0.046, 0.040, 0.72), Color(0.36, 0.30, 0.20, 0.78)))
+	skip_button.add_theme_stylebox_override("hover", _skip_box(Color(0.070, 0.058, 0.044, 0.86), Color(0.68, 0.50, 0.24, 0.90)))
+	skip_button.add_theme_stylebox_override("pressed", _skip_box(Color(0.090, 0.068, 0.046, 0.94), Color(0.82, 0.60, 0.30, 1.0)))
 	skip_button.pressed.connect(func() -> void: skipped.emit())
 	skip_holder.add_child(skip_button)
+
+	card_inspector = CardInspectorScript.new()
+	add_child(card_inspector)
 	_layout_reward()
 
 
@@ -125,7 +143,6 @@ func _layout_reward() -> void:
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		viewport_size = Vector2(1280, 720)
-	size = viewport_size
 	var panel_size := Vector2(min(780.0, viewport_size.x - 96.0), min(460.0, viewport_size.y - 86.0))
 	var origin := (viewport_size - panel_size) * 0.5
 	if panel != null:
@@ -152,27 +169,52 @@ func show_rewards(cards: Array) -> void:
 		var slot := CenterContainer.new()
 		slot.custom_minimum_size = Vector2(146, 172)
 		slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		var rarity := String(card.rarity)
+		if rarity == "rare" or rarity == "uncommon":
+			var glow := ColorRect.new()
+			glow.color = Color(1.0, 0.76, 0.22, 0.16) if rarity == "rare" else Color(0.35, 0.68, 1.0, 0.12)
+			glow.set_anchors_preset(Control.PRESET_FULL_RECT)
+			glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			slot.add_child(glow)
 		var card_view = CARD_VIEW_SCENE.instantiate()
 		card_view.setup(instance, 99, false)
 		card_view.position = Vector2.ZERO
 		card_view.rotation = 0.0
-		card_view.scale = Vector2.ONE
-		if card_view.has_method("set_rest_pose"):
-			card_view.set_rest_pose(Vector2.ZERO, 0.0, 0)
+		card_view.scale = Vector2(0.82, 0.82)
+		card_view.modulate = Color(1, 1, 1, 0.0)
 		card_view.card_selected.connect(func(_card) -> void: card_chosen.emit(card_id))
+		card_view.card_hovered.connect(_on_card_hovered)
+		card_view.card_unhovered.connect(_on_card_unhovered)
 		slot.add_child(card_view)
 		card_box.add_child(slot)
 	visible = true
 	move_to_front()
+	if card_inspector != null:
+		card_inspector.move_to_front()
+	_animate_reward_reveal()
 
 
 func hide_rewards() -> void:
 	visible = false
+	if card_inspector != null:
+		card_inspector.visible = false
+
+
+func _on_card_hovered(card_instance, anchor_position: Vector2) -> void:
+	if card_inspector == null:
+		return
+	card_inspector.show_card(card_instance, anchor_position)
+
+
+func _on_card_unhovered(card_instance) -> void:
+	if card_inspector == null:
+		return
+	card_inspector.hide_card(card_instance)
 
 
 func _reward_box() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.095, 0.075, 0.050, 0.96)
+	style.bg_color = Color(0.080, 0.060, 0.042, 0.88)
 	style.border_color = Color(0.72, 0.52, 0.22)
 	style.set_border_width_all(2)
 	style.corner_radius_top_left = 8
@@ -186,7 +228,36 @@ func _reward_box() -> StyleBoxFlat:
 	return style
 
 
+func _skip_box(bg: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
+	return style
+
+
+func _animate_reward_reveal() -> void:
+	var index := 0
+	for slot in card_box.get_children():
+		for child in slot.get_children():
+			if child is Button:
+				var card_view := child as Control
+				var tween := create_tween()
+				tween.tween_interval(0.08 * float(index))
+				tween.tween_property(card_view, "modulate:a", 1.0, 0.16)
+				tween.parallel().tween_property(card_view, "scale", Vector2.ONE, 0.18)
+				index += 1
+
+
 func _load_png_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var imported = load(path)
+		if imported is Texture2D:
+			return imported
 	var image := Image.new()
 	var err := image.load(path)
 	if err != OK:

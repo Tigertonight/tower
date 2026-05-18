@@ -42,9 +42,11 @@ func _init() -> void:
 func _run() -> void:
 	backup = _backup_save()
 	_remove_save()
+	_silence_audio()
 	await _check_top_level_screens()
 	await _check_all_events_and_choices()
 	_restore_save(backup)
+	_silence_audio()
 	if not warnings.is_empty():
 		print("Acceptance warnings:")
 		for item in warnings:
@@ -82,7 +84,7 @@ func _check_top_level_screens() -> void:
 				run._show_run_summary("victory")
 		await process_frame
 		_check_screen(run, screen_id)
-		run.queue_free()
+		_dispose_run(run)
 		await process_frame
 
 
@@ -104,7 +106,7 @@ func _check_all_events_and_choices() -> void:
 			var buttons := _all_enabled_buttons(run.current_screen)
 			if choice_index >= buttons.size():
 				failures.append("%s missing button index %d." % [event_id, choice_index])
-				run.queue_free()
+				_dispose_run(run)
 				await process_frame
 				continue
 			buttons[choice_index].pressed.emit()
@@ -112,7 +114,7 @@ func _check_all_events_and_choices() -> void:
 			await process_frame
 			if run.current_screen == null:
 				failures.append("%s choice %d left the run on a null screen." % [event_id, choice_index + 1])
-			run.queue_free()
+			_dispose_run(run)
 			await process_frame
 
 
@@ -123,7 +125,7 @@ func _event_choice_count(event_entry: Dictionary) -> int:
 	await process_frame
 	var count := _all_enabled_buttons(run.current_screen).size()
 	_check_screen(run, "%s choice screen" % String(event_entry["id"]))
-	run.queue_free()
+	_dispose_run(run)
 	await process_frame
 	return count
 
@@ -139,6 +141,22 @@ func _new_run() -> Node:
 	if run.run_deck_ids.size() < 12:
 		failures.append("Starter deck unexpectedly small: %d." % run.run_deck_ids.size())
 	return run
+
+
+func _dispose_run(run: Node) -> void:
+	if run == null:
+		return
+	if run.has_method("_clear_screen"):
+		run.call("_clear_screen")
+	if run.get_parent() != null:
+		run.get_parent().remove_child(run)
+	run.free()
+
+
+func _silence_audio() -> void:
+	var am = root.get_node_or_null("/root/AudioManager")
+	if am != null and am.has_method("set_test_silenced"):
+		am.set_test_silenced(true)
 
 
 func _prepare_event_run(run: Node, event_entry: Dictionary) -> void:

@@ -45,16 +45,17 @@ func _init() -> void:
 	var runs: int = int(args.get("runs", 100))
 	var out_path: String = String(args.get("out", "user://balance.csv"))
 	var seed_base: int = int(args.get("seed", 1))
+	var acts: int = clamp(int(args.get("acts", 3)), 1, 3)
 
 	_load_databases()
 
-	print("[balance] character=%s ascension=%d runs=%d out=%s" % [character_id, ascension, runs, out_path])
+	print("[balance] character=%s ascension=%d acts=%d runs=%d out=%s" % [character_id, ascension, acts, runs, out_path])
 	var rows: Array[String] = []
 	rows.append("character,ascension,run_seed,floors_cleared,act_reached,outcome,final_hp,deck_size,turns_total,biggest_hit")
 	var wins := 0
 	for i in runs:
 		var run_seed := seed_base + i
-		var result: Dictionary = _simulate_run(character_id, ascension, run_seed)
+		var result: Dictionary = _simulate_run(character_id, ascension, run_seed, acts)
 		rows.append(",".join([
 			character_id,
 			str(ascension),
@@ -116,7 +117,7 @@ func _load_databases() -> void:
 					character_db[String(c.get("id"))] = c
 
 
-func _simulate_run(character_id: String, ascension: int, run_seed: int) -> Dictionary:
+func _simulate_run(character_id: String, ascension: int, run_seed: int, act_limit: int = 3) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = run_seed
 	var character = CharacterCatalogScript.resolve(character_db, character_id)
@@ -127,6 +128,9 @@ func _simulate_run(character_id: String, ascension: int, run_seed: int) -> Dicti
 		var cid := String(entry).trim_suffix("+")
 		if card_db.has(cid):
 			deck.append({"id": cid, "upgraded": String(entry).ends_with("+")})
+	var character_pool := String(character.get("card_pool_id"))
+	if character_pool == "":
+		character_pool = character_id.trim_prefix("char_")
 	var max_hp: int = int(character.starting_hp)
 	var hp: int = max_hp
 	var act := 1
@@ -135,14 +139,17 @@ func _simulate_run(character_id: String, ascension: int, run_seed: int) -> Dicti
 	var biggest_hit := 0
 	var act_results: Array = _build_act_encounter_list()
 	var outcome := "defeat"
-	for act_index in act_results.size():
+	for act_index in min(act_limit, act_results.size()):
 		act = act_index + 1
 		var encounters: Array = act_results[act_index]
 		# Run between 6 and 9 encounters per act in a vertical-slice approximation.
 		var encounter_count: int = clamp(encounters.size(), 6, 9)
+		if act_limit == 1:
+			encounter_count = min(encounter_count, 7)
 		for floor_idx in encounter_count:
+			var is_boss_floor := floor_idx == encounter_count - 1
 			var encounter_id: String
-			if floor_idx == encounter_count - 1:
+			if is_boss_floor:
 				encounter_id = _act_boss_id(act)
 			else:
 				encounter_id = encounters[floor_idx % encounters.size()]
@@ -161,6 +168,10 @@ func _simulate_run(character_id: String, ascension: int, run_seed: int) -> Dicti
 				}
 			hp = int(combat_result["hp"])
 			floors_cleared += 1
+			if not is_boss_floor:
+				_grant_sim_card_reward(deck, character_pool, rng)
+				if floor_idx == encounter_count - 2:
+					hp = min(max_hp, hp + int(float(max_hp) * 0.25))
 		# Inter-act heal + small reward (loose simulation of run rewards).
 		hp = min(max_hp, hp + int(float(max_hp) * 0.20))
 	outcome = "victory"
@@ -190,13 +201,64 @@ func _build_act_encounter_list() -> Array:
 func _act_boss_id(act: int) -> String:
 	match act:
 		1:
-			return "b_ink_tyrant"
+			return "b_sealed_curator"
 		2:
 			return "b_mirror_tribunal"
 		3:
 			return "b_last_catalog"
 		_:
 			return "b_sealed_curator"
+
+
+func _grant_sim_card_reward(deck: Array, character_pool: String, rng: RandomNumberGenerator) -> void:
+	var source_pool := character_pool if rng.randi_range(1, 100) <= 85 else "public"
+	var rarity := _roll_sim_reward_rarity(rng)
+	var pool := _sim_reward_candidates(rarity, source_pool)
+	if pool.is_empty() and source_pool != "":
+		pool = _sim_reward_candidates(rarity, "")
+	if pool.is_empty():
+		pool = _sim_reward_candidates("", "")
+	if pool.is_empty():
+		return
+	var card_id: String = pool[rng.randi_range(0, pool.size() - 1)]
+	deck.append({"id": card_id, "upgraded": false})
+
+
+func _sim_reward_candidates(rarity: String, source_pool: String) -> Array[String]:
+	var ids: Array[String] = []
+	for card_id in card_db.keys():
+		var card = card_db[card_id]
+		if not bool(card.get("rewardable")):
+			continue
+		var card_rarity := String(card.rarity)
+		if card_rarity == "basic" or card_rarity == "special":
+			continue
+		if rarity != "" and card_rarity != rarity:
+			continue
+		var card_type := String(card.card_type)
+		if card_type == "curse" or card_type == "status":
+			continue
+		var pool_id := String(card.get("pool_id"))
+		if pool_id == "":
+			pool_id = "public"
+		if ["status", "curse", "generated", "event"].has(pool_id):
+			continue
+		if source_pool != "":
+			if pool_id != source_pool:
+				continue
+		elif pool_id != "public" and pool_id != "assassin":
+			continue
+		ids.append(String(card_id))
+	return ids
+
+
+func _roll_sim_reward_rarity(rng: RandomNumberGenerator) -> String:
+	var roll := rng.randi_range(1, 100)
+	if roll <= 60:
+		return "common"
+	if roll <= 97:
+		return "uncommon"
+	return "rare"
 
 
 # ─── Single-combat sim ────────────────────────────────────────────────────────
@@ -344,11 +406,13 @@ class SimCombat:
 				EffectResolverScript.resolve(effect, self, self, target)
 				target = _pick_first_alive_enemy()
 			# Move card to discard / exhaust.
-			hand.remove_at(idx)
-			if bool(card.exhaust_on_play):
-				exhaust_pile.append(entry)
-			else:
-				discard_pile.append(entry)
+			var played_idx := hand.find(entry)
+			if played_idx >= 0:
+				hand.remove_at(played_idx)
+				if bool(card.exhaust_on_play):
+					exhaust_pile.append(entry)
+				else:
+					discard_pile.append(entry)
 			if alive_enemies().is_empty():
 				break
 

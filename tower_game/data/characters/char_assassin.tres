@@ -16,5 +16,5 @@ is_playable = true
 theme_color = Color(0.30, 0.72, 0.48, 1)
 starting_hp = 66
 starting_relic_id = "hidden_blade"
-starter_deck = ["strike_form", "strike_form", "strike_form", "strike_form", "guard_form", "guard_form", "guard_form", "guard_form", "papercut", "reading_glance", "silent_step", "thumb_jab"]
+starter_deck = ["margin_slash", "margin_slash", "margin_slash", "margin_slash", "needle_guard", "needle_guard", "needle_guard", "needle_guard", "side_cut", "smoke_step", "marked_pin", "throwing_label"]
 sprite_path = "res://art/generated/sprites/assassin.png"

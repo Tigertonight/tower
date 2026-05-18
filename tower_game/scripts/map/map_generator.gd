@@ -206,11 +206,11 @@ static func _assign_encounters(layers: Array, rng: RandomNumberGenerator, act_in
 			elites = ["el_archive_warden", "el_null_librarian", "el_redaction_engine"]
 			boss = _pick_id(["b_grand_archivist", "b_last_catalog"], rng)
 		_:
-			early = ["e_dust_scribe", "e_loose_folio", "e_index_rat", "e_dust_scribe+e_loose_folio"]
-			mid = ["e_loose_folio", "e_wax_acolyte", "e_margin_hound", "e_staple_swarm", "e_loose_folio+e_index_rat"]
-			late = ["e_wax_acolyte", "e_margin_hound", "e_burnt_courier", "e_staple_swarm+e_margin_hound", "e_wax_acolyte+e_margin_hound"]
-			elites = ["el_wax_sentinel", "el_first_clause", "el_dust_chorus"]
-			boss = _pick_id(["b_sealed_curator", "b_ink_tyrant"], rng)
+			early = ["e_dust_scribe", "e_index_rat", "e_loose_folio", "e_dust_scribe+e_loose_folio"]
+			mid = ["e_loose_folio", "e_wax_acolyte", "e_margin_hound", "e_loose_folio+e_index_rat"]
+			late = ["e_wax_acolyte", "e_margin_hound", "e_staple_swarm", "e_wax_acolyte+e_margin_hound"]
+			elites = ["el_wax_sentinel", "el_dust_chorus"]
+			boss = "b_sealed_curator"
 	for layer_index in layers.size():
 		for node_index in layers[layer_index].size():
 			var node_type := String(layers[layer_index][node_index]["type"])

@@ -29,6 +29,7 @@ var _content_scroll: ScrollContainer
 var _offers_box: VBoxContainer
 var _gold_label: Label
 var _hint_label: Label
+var _vendor_art: TextureRect
 var _card_row: HBoxContainer
 var _relic_row: HBoxContainer
 var _potion_row: HBoxContainer
@@ -119,63 +120,102 @@ func _build() -> void:
 	_gold_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.32))
 	header.add_child(_gold_label)
 
+	var body := HBoxContainer.new()
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 18)
+	box.add_child(body)
+
+	var vendor_panel := PanelContainer.new()
+	vendor_panel.custom_minimum_size = Vector2(210, 0)
+	vendor_panel.add_theme_stylebox_override("panel", _surface_box(Color(0.050, 0.040, 0.030, 0.58), Color(0.58, 0.42, 0.20, 0.62)))
+	body.add_child(vendor_panel)
+
+	var vendor_box := VBoxContainer.new()
+	vendor_box.add_theme_constant_override("separation", 10)
+	vendor_panel.add_child(vendor_box)
+
+	_vendor_art = TextureRect.new()
+	_vendor_art.texture = _load_png_texture("res://art/generated/sprites/shop_vendor.png")
+	_vendor_art.custom_minimum_size = Vector2(0, 300)
+	_vendor_art.ignore_texture_size = true
+	_vendor_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_vendor_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_vendor_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vendor_box.add_child(_vendor_art)
+
 	_hint_label = Label.new()
 	_hint_label.text = _tr("shop.hint", "A lantern-lit vendor lays three tools on velvet. Gold speaks softly here.")
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(_hint_label)
+	_hint_label.add_theme_font_size_override("font_size", 13)
+	_hint_label.modulate = Color(0.86, 0.78, 0.64, 0.94)
+	vendor_box.add_child(_hint_label)
 
 	_content_scroll = ScrollContainer.new()
 	_content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	box.add_child(_content_scroll)
+	body.add_child(_content_scroll)
 
 	_offers_box = VBoxContainer.new()
 	_offers_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_offers_box.add_theme_constant_override("separation", 10)
+	_offers_box.add_theme_constant_override("separation", 6)
 	_content_scroll.add_child(_offers_box)
 
-	_card_row = HBoxContainer.new()
-	_card_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_card_row.add_theme_constant_override("separation", 16)
-	_card_row.custom_minimum_size = Vector2(0, 160)
+	_add_shelf_title(_offers_box, _tr("shop.kind.card", "Cards"))
+	_card_row = _make_shelf_row(172)
 	_offers_box.add_child(_card_row)
 
-	_relic_row = HBoxContainer.new()
-	_relic_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_relic_row.add_theme_constant_override("separation", 16)
-	_relic_row.custom_minimum_size = Vector2(0, 96)
+	_add_shelf_title(_offers_box, _tr("shop.kind.relic", "Relics"))
+	_relic_row = _make_shelf_row(96)
 	_offers_box.add_child(_relic_row)
 
-	_potion_row = HBoxContainer.new()
-	_potion_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_potion_row.add_theme_constant_override("separation", 16)
-	_potion_row.custom_minimum_size = Vector2(0, 96)
+	_add_shelf_title(_offers_box, _tr("shop.kind.potion", "Potions"))
+	_potion_row = _make_shelf_row(96)
 	_offers_box.add_child(_potion_row)
 
 	_service_box = HBoxContainer.new()
 	_service_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	_service_box.add_theme_constant_override("separation", 8)
+	_service_box.add_theme_constant_override("separation", 10)
 	box.add_child(_service_box)
 
 	_remove_button = Button.new()
 	_remove_button.text = _tr("shop.remove", "Remove a card  -  %d gold") % 0
-	_remove_button.custom_minimum_size = Vector2(260, 42)
+	_remove_button.custom_minimum_size = Vector2(300, 42)
+	_remove_button.add_theme_stylebox_override("normal", _service_button_box(Color(0.070, 0.050, 0.036, 0.88), Color(0.62, 0.40, 0.18, 0.88)))
+	_remove_button.add_theme_stylebox_override("hover", _service_button_box(Color(0.100, 0.066, 0.042, 0.96), Color(0.96, 0.62, 0.28, 1.0)))
 	_remove_button.pressed.connect(_on_remove_pressed)
 	_service_box.add_child(_remove_button)
 
 	_leave_button = Button.new()
 	_leave_button.text = _tr("shop.leave", "Leave")
-	_leave_button.custom_minimum_size = Vector2(160, 42)
+	_leave_button.custom_minimum_size = Vector2(150, 42)
+	_leave_button.add_theme_stylebox_override("normal", _service_button_box(Color(0.046, 0.044, 0.040, 0.76), Color(0.34, 0.30, 0.24, 0.82)))
+	_leave_button.add_theme_stylebox_override("hover", _service_button_box(Color(0.066, 0.056, 0.044, 0.90), Color(0.64, 0.48, 0.24, 0.92)))
 	_leave_button.pressed.connect(func() -> void: leave_pressed.emit())
 	_service_box.add_child(_leave_button)
 	_layout_shop()
+
+
+func _make_shelf_row(height: float) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	row.custom_minimum_size = Vector2(0, height)
+	return row
+
+
+func _add_shelf_title(parent: VBoxContainer, text_value: String) -> void:
+	var label := Label.new()
+	label.text = text_value
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(1.0, 0.80, 0.46))
+	parent.add_child(label)
 
 
 func _layout_shop() -> void:
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		viewport_size = Vector2(1280, 720)
-	size = viewport_size
 	var panel_size := Vector2(min(1060.0, viewport_size.x - 80.0), min(620.0, viewport_size.y - 78.0))
 	var origin := (viewport_size - panel_size) * 0.5
 	if _panel != null:
@@ -185,7 +225,6 @@ func _layout_shop() -> void:
 		_panel.offset_bottom = origin.y + panel_size.y
 	if _content_scroll != null:
 		_content_scroll.custom_minimum_size = Vector2(0, 0)
-		_content_scroll.size = Vector2(max(1.0, panel_size.x - 36.0), max(1.0, panel_size.y - 32.0))
 
 
 func set_offers(gold: int, card_offers: Array, relic_offers: Array, potion_offers: Array, remove_price: int, can_remove: bool) -> void:
@@ -242,7 +281,7 @@ func _make_offer_item(offer: Dictionary, kind: String) -> Control:
 	var rarity := String(offer.get("rarity", "common"))
 	var border: Color = RARITY_COLORS.get(rarity, RARITY_COLORS["common"])
 	var item := Button.new()
-	item.custom_minimum_size = Vector2(154, 126)
+	item.custom_minimum_size = Vector2(146, 94)
 	item.text = ""
 	item.focus_mode = Control.FOCUS_NONE
 	item.add_theme_stylebox_override("normal", _offer_box(border))
@@ -253,10 +292,10 @@ func _make_offer_item(offer: Dictionary, kind: String) -> Control:
 	var box := VBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_FULL_RECT)
 	box.offset_left = 8
-	box.offset_top = 6
+	box.offset_top = 7
 	box.offset_right = -8
 	box.offset_bottom = -6
-	box.add_theme_constant_override("separation", 3)
+	box.add_theme_constant_override("separation", 4)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	item.add_child(box)
 
@@ -264,7 +303,7 @@ func _make_offer_item(offer: Dictionary, kind: String) -> Control:
 	if icon_path != "":
 		var icon := TextureRect.new()
 		icon.texture = _load_png_texture(icon_path)
-		icon.custom_minimum_size = Vector2(0, 34)
+		icon.custom_minimum_size = Vector2(0, 26)
 		icon.ignore_texture_size = true
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -275,23 +314,15 @@ func _make_offer_item(offer: Dictionary, kind: String) -> Control:
 	name_label.text = _localized_name(String(offer.get("id", "")), String(offer.get("name", "?")))
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_font_size_override("font_size", 12)
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(name_label)
-
-	var rarity_label := Label.new()
-	rarity_label.text = _tr("enum.%s" % rarity, rarity.to_upper())
-	rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rarity_label.add_theme_font_size_override("font_size", 10)
-	rarity_label.add_theme_color_override("font_color", border)
-	rarity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(rarity_label)
 
 	var price := int(offer.get("price", 0))
 	var price_label := Label.new()
 	price_label.text = _tr("shop.price", "%d gold") % price
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	price_label.add_theme_font_size_override("font_size", 12)
+	price_label.add_theme_font_size_override("font_size", 11)
 	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if _gold < price:
 		price_label.add_theme_color_override("font_color", Color(1.0, 0.40, 0.32))
@@ -318,10 +349,12 @@ func _make_offer_item(offer: Dictionary, kind: String) -> Control:
 			"relic":
 				item.pressed.connect(func() -> void:
 					_sold_relic_ids[offer_id] = true
+					_play_purchase_flash(item)
 					relic_purchased.emit(offer_id, price))
 			"potion":
 				item.pressed.connect(func() -> void:
 					_sold_potion_ids[offer_id] = true
+					_play_purchase_flash(item)
 					potion_purchased.emit(offer_id, price))
 
 	return item
@@ -335,7 +368,7 @@ func _make_card_offer_item(offer: Dictionary) -> Control:
 	var sold := _sold_card_ids.has(offer_id)
 
 	var item := PanelContainer.new()
-	item.custom_minimum_size = Vector2(132, 182)
+	item.custom_minimum_size = Vector2(128, 172)
 	item.add_theme_stylebox_override("panel", _offer_box(border))
 	item.set_meta("offer_id", offer_id)
 
@@ -352,6 +385,7 @@ func _make_card_offer_item(offer: Dictionary) -> Control:
 	if not sold and _gold >= price:
 		card_view.card_selected.connect(func(_card) -> void:
 			_sold_card_ids[offer_id] = true
+			_play_purchase_flash(item)
 			card_purchased.emit(offer_id, price))
 	box.add_child(card_view)
 
@@ -406,6 +440,7 @@ func _apply_sold_overlay(item: Control) -> void:
 
 
 func _on_remove_pressed() -> void:
+	_play_purchase_flash(_remove_button)
 	remove_card_requested.emit(0)
 
 
@@ -441,9 +476,57 @@ func _offer_box(border: Color) -> StyleBoxFlat:
 	return style
 
 
+func _surface_box(bg: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	return style
+
+
+func _service_button_box(bg: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 7
+	style.corner_radius_top_right = 7
+	style.corner_radius_bottom_left = 7
+	style.corner_radius_bottom_right = 7
+	return style
+
+
+func _play_purchase_flash(target: Control) -> void:
+	if target == null:
+		return
+	var coin := TextureRect.new()
+	coin.texture = _load_png_texture("res://art/generated/ui/price_tag.png")
+	coin.ignore_texture_size = true
+	coin.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	coin.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	coin.custom_minimum_size = Vector2(42, 42)
+	coin.global_position = target.global_position + target.size * 0.5 - Vector2(21, 21)
+	coin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(coin)
+	var tween := create_tween()
+	tween.tween_property(coin, "global_position", _gold_label.global_position + Vector2(8, 0), 0.24)
+	tween.parallel().tween_property(coin, "modulate:a", 0.0, 0.26)
+	tween.tween_callback(coin.queue_free)
+
+
 func _load_png_texture(path: String) -> Texture2D:
-	if not FileAccess.file_exists(path):
-		return null
+	if ResourceLoader.exists(path):
+		var imported = load(path)
+		if imported is Texture2D:
+			return imported
 	var image := Image.new()
 	var err := image.load(path)
 	if err != OK:

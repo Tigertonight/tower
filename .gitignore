@@ -6,6 +6,10 @@ export_presets.cfg
 *.uid
 .DS_Store
 tmp/
+dist/
+
+# Local visual review captures.
+tower/targeted_screenshots/
 
 # Local verification screenshots.
 tower_game/ui_*.png

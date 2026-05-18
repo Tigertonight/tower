@@ -5,25 +5,17 @@ extends RefCounted
 # id → CharacterData lookup. RunManager calls `load_all()` once at startup.
 
 const CharacterDataScript := preload("res://scripts/core/character_data.gd")
+const ResourcePathUtilScript := preload("res://scripts/core/resource_path_util.gd")
 
 const DEFAULT_ID := "char_vanguard"
 
 
 static func load_all() -> Dictionary:
 	var out := {}
-	var dir := DirAccess.open("res://data/characters")
-	if dir == null:
-		return out
-	dir.list_dir_begin()
-	var file_name := dir.get_next()
-	while file_name != "":
-		if file_name.ends_with(".tres"):
-			var path := "res://data/characters/%s" % file_name
-			var res = load(path)
-			if res != null and String(res.id) != "":
-				out[String(res.id)] = res
-		file_name = dir.get_next()
-	dir.list_dir_end()
+	for path in ResourcePathUtilScript.data_resource_paths("res://data/characters"):
+		var res = load(path)
+		if res != null and String(res.id) != "":
+			out[String(res.id)] = res
 	return out
 
 

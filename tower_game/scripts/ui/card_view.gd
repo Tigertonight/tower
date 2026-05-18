@@ -11,6 +11,7 @@ const KeywordCatalogScript := preload("res://scripts/core/keyword_catalog.gd")
 var card
 var rest_position := Vector2.ZERO
 var rest_rotation := 0.0
+var rest_pose_locked := false
 var cost_label: Label
 var rarity_label: Label
 var name_label: Label
@@ -36,6 +37,7 @@ func setup(card_instance, available_energy: int, disabled_by_state: bool) -> voi
 	card = card_instance
 	rest_position = position
 	rest_rotation = rotation
+	rest_pose_locked = false
 	pivot_offset = CARD_SIZE * 0.5
 	custom_minimum_size = CARD_SIZE
 	_build_card_body()
@@ -201,6 +203,9 @@ func _loc():
 func _on_mouse_entered() -> void:
 	if disabled:
 		return
+	if not rest_pose_locked:
+		rest_position = position
+		rest_rotation = rotation
 	z_index = 200
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_QUAD)
@@ -229,6 +234,7 @@ func _on_mouse_exited() -> void:
 func set_rest_pose(pos: Vector2, rot: float, layer: int) -> void:
 	rest_position = pos
 	rest_rotation = rot
+	rest_pose_locked = true
 	position = pos
 	rotation = rot
 	z_index = layer
@@ -404,8 +410,10 @@ func _load_card_art_texture(card_id: String) -> Texture2D:
 		candidates.append("res://art/generated/ui/placeholder_%s.png" % card_type)
 	candidates.append("res://art/generated/ui/card_back.png")
 	for path in candidates:
-		if not FileAccess.file_exists(path):
-			continue
+		if ResourceLoader.exists(path):
+			var imported = load(path)
+			if imported is Texture2D:
+				return imported
 		var image := Image.new()
 		var err := image.load(path)
 		if err == OK:

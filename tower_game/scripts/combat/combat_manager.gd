@@ -23,6 +23,7 @@ const DeckModalScript := preload("res://scripts/ui/deck_modal.gd")
 const ToastLayerScript := preload("res://scripts/ui/toast_layer.gd")
 const AscensionConfigScript := preload("res://scripts/core/ascension_config.gd")
 const KeywordCatalogScript := preload("res://scripts/core/keyword_catalog.gd")
+const ResourcePathUtilScript := preload("res://scripts/core/resource_path_util.gd")
 
 var player_max_hp := 76
 var player_hp := 76
@@ -73,6 +74,7 @@ var log_label: Label
 var combat_title_label: Label
 var effect_layer: Control
 var player_label: Label
+var player_title_label: Label
 var player_hp_bar: ProgressBar
 var player_block_label: Label
 var player_status_label: Label
@@ -137,6 +139,34 @@ func _localized_name(id: String, fallback: String) -> String:
 	if loc != null:
 		return loc.name_for(id, fallback)
 	return fallback
+
+
+func _localized_player_name() -> String:
+	match configured_character_id:
+		"char_mage":
+			return _tr("char.char_mage.name", "Mage")
+		"char_assassin":
+			return _tr("char.char_assassin.name", "Assassin")
+		"char_archivist":
+			return _tr("char.char_archivist.name", "Archivist")
+		"char_warlock":
+			return _tr("char.char_warlock.name", "Warlock")
+		_:
+			return _tr("char.char_vanguard.name", "Vanguard")
+
+
+func _player_art_path() -> String:
+	match configured_character_id:
+		"char_mage":
+			return "res://art/generated/sprites/mage.png"
+		"char_assassin":
+			return "res://art/generated/sprites/assassin.png"
+		"char_archivist":
+			return "res://art/generated/sprites/archivist.png"
+		"char_warlock":
+			return "res://art/generated/sprites/warlock.png"
+		_:
+			return "res://art/generated/sprites/vanguard_archivist.png"
 
 
 func refresh_language() -> void:
@@ -283,7 +313,8 @@ func _build_ui() -> void:
 	player_panel.add_child(player_panel_box)
 
 	var player_title := Label.new()
-	player_title.text = _tr("combat.player_name", "Vanguard Archivist")
+	player_title_label = player_title
+	player_title.text = _localized_player_name()
 	player_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	player_title.add_theme_font_size_override("font_size", 20)
 	player_panel_box.add_child(player_title)
@@ -307,11 +338,11 @@ func _build_ui() -> void:
 	player_art_rect.ignore_texture_size = true
 	player_art_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	player_art_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	player_art_rect.texture = _load_character_texture("res://art/generated/sprites/vanguard_archivist.png")
+	player_art_rect.texture = _load_character_texture(_player_art_path())
 	player_panel_box.add_child(player_art_rect)
 
 	var player_hint := Label.new()
-	player_hint.text = "Status: Ready"
+	player_hint.text = _tr("combat.ready", "Status: Ready")
 	player_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	player_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	player_panel_box.add_child(player_hint)
@@ -498,10 +529,10 @@ func _maybe_play_tutorial_hints() -> void:
 	if fast_resolve:
 		return
 	var lines := [
-		{"text": "Tip: hover any card to see full details and keywords.", "color": Color(0.95, 0.86, 0.55), "delay": 1.2},
-		{"text": "Tip: click an enemy panel to switch your target.", "color": Color(0.85, 0.78, 0.95), "delay": 4.0},
-		{"text": "Tip: End Turn keeps Strength/Dex; Block resets each turn.", "color": Color(0.82, 0.94, 0.85), "delay": 7.0},
-		{"text": "Tip: ESC opens pause / settings.", "color": Color(0.94, 0.86, 0.72), "delay": 10.0},
+		{"text": _tr("combat.tip.hover", "Tip: hover any card to see full details and keywords."), "color": Color(0.95, 0.86, 0.55), "delay": 1.2},
+		{"text": _tr("combat.tip.target", "Tip: click an enemy panel to switch your target."), "color": Color(0.85, 0.78, 0.95), "delay": 4.0},
+		{"text": _tr("combat.tip.end_turn", "Tip: End Turn keeps Strength/Dex; Block resets each turn."), "color": Color(0.82, 0.94, 0.85), "delay": 7.0},
+		{"text": _tr("combat.tip.settings", "Tip: ESC opens pause / settings."), "color": Color(0.94, 0.86, 0.72), "delay": 10.0},
 	]
 	for entry in lines:
 		var t := get_tree().create_timer(float(entry["delay"]))
@@ -624,7 +655,8 @@ func _build_fixed_combat_layout() -> void:
 	player_panel.add_child(player_panel_box)
 
 	var player_title := Label.new()
-	player_title.text = _tr("combat.player_name", "Vanguard Archivist")
+	player_title_label = player_title
+	player_title.text = _localized_player_name()
 	player_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	player_title.add_theme_font_size_override("font_size", 21)
 	player_panel_box.add_child(player_title)
@@ -656,7 +688,7 @@ func _build_fixed_combat_layout() -> void:
 	player_art_rect.ignore_texture_size = true
 	player_art_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	player_art_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	player_art_rect.texture = _load_character_texture("res://art/generated/sprites/vanguard_archivist.png")
+	player_art_rect.texture = _load_character_texture(_player_art_path())
 	player_panel_box.add_child(player_art_rect)
 
 	# A row of enemy panels — one per alive enemy. Filled in
@@ -803,7 +835,7 @@ func _build_enemy_panel(idx: int) -> Dictionary:
 	panel.add_theme_stylebox_override("focus", _stage_box(Color(0.105, 0.060, 0.048, 0.74), Color(0.98, 0.50, 0.30)))
 	panel.pressed.connect(func(): set_target_index(idx))
 	# Click target highlight uses tooltip too — readable by screen-readers.
-	panel.tooltip_text = "Click to target this enemy."
+	panel.tooltip_text = _tr("combat.target_tip", "Click to target this enemy.")
 
 	var box := VBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1030,13 +1062,8 @@ func _banner_box() -> StyleBoxFlat:
 
 func _create_card_database() -> void:
 	card_database.clear()
-	var dir := DirAccess.open("res://data/cards")
-	if dir == null:
-		push_error("Failed to open card data directory.")
-		return
-	for file_name in dir.get_files():
-		if file_name.ends_with(".tres"):
-			_load_card("res://data/cards/%s" % file_name)
+	for path in ResourcePathUtilScript.data_resource_paths("res://data/cards"):
+		_load_card(path)
 	reward_pool.clear()
 	for card_id in card_database.keys():
 		if _is_rewardable_card(String(card_id)):
@@ -1058,13 +1085,8 @@ func _load_card(path: String) -> void:
 
 func _create_relic_database() -> void:
 	relic_database.clear()
-	var dir := DirAccess.open("res://data/relics")
-	if dir == null:
-		push_error("Failed to open relic data directory.")
-		return
-	for file_name in dir.get_files():
-		if file_name.ends_with(".tres"):
-			_load_relic("res://data/relics/%s" % file_name)
+	for path in ResourcePathUtilScript.data_resource_paths("res://data/relics"):
+		_load_relic(path)
 
 
 func _load_relic(path: String) -> void:
@@ -1317,8 +1339,8 @@ func _on_card_pressed(card) -> void:
 		_push_toast("%s is unplayable" % card.get_display_name(), Color(0.95, 0.30, 0.55))
 		return
 	if card.get_cost() > player_energy:
-		_set_log("Not enough energy for %s." % card.get_display_name())
-		_push_toast("Not enough energy", Color(1.0, 0.6, 0.4))
+		_set_log(_tr("combat.log.no_energy_for", "Not enough energy for %s.") % card.get_display_name())
+		_push_toast(_tr("combat.no_energy", "Not enough energy"), Color(1.0, 0.6, 0.4))
 		return
 	if action_queue == null:
 		# Fallback to synchronous resolve if the queue isn't ready yet.
@@ -1336,7 +1358,7 @@ func _play_card_with_queue(card) -> void:
 	var had_block_effect := false
 	for effect in card.get_effects():
 		var et := String(effect.get("type", ""))
-		if et == "damage":
+		if et == "damage" or et == "damage_all_enemies" or et == "damage_per_target_ink":
 			had_damage_effect = true
 		elif et == "block":
 			had_block_effect = true
@@ -1364,6 +1386,7 @@ func _play_card_with_queue(card) -> void:
 
 	# Step 2: VFX + hit pause (only meaningful on damage cards).
 	if had_damage_effect:
+		action_queue.push(func() -> Tween: return _play_player_attack_commit())
 		action_queue.push(func(): _spawn_slash_effect())
 		action_queue.push_wait(0.08)
 		action_queue.push_hit_pause(0.06)
@@ -1385,10 +1408,9 @@ func _play_card_with_queue(card) -> void:
 			relic_manager.trigger("card_played", self, {"card_type": String(card.data.card_type)})
 	)
 
-	# Step 4: enemy flash + shake on damage.
-	if had_damage_effect:
-		action_queue.push(func(): _flash_enemy())
-	# HP / Block bars tween in deal_damage / gain_player_block already.
+	# Step 4: HP / Block bars and per-target hit feedback happen inside
+	# deal_damage / gain_player_block so multi-enemy attacks shake the target
+	# that actually got hit.
 	action_queue.push_wait(0.20)
 
 	# Step 5: discard / exhaust & cleanup.
@@ -1412,7 +1434,8 @@ func _resolve_card_immediate(card) -> void:
 	var target = enemy
 	var had_damage_effect := false
 	for effect in card.get_effects():
-		if String(effect.get("type", "")) == "damage":
+		var et := String(effect.get("type", ""))
+		if et == "damage" or et == "damage_all_enemies" or et == "damage_per_target_ink":
 			had_damage_effect = true
 		EffectResolverScript.resolve(effect, self, self, target)
 	_move_played_card_to_final_pile(card)
@@ -1449,26 +1472,67 @@ func _move_played_card_to_final_pile(card) -> void:
 			deck.discard_pile.append(card)
 
 
-func _flash_enemy() -> void:
-	if enemy_art_rect == null:
+func _art_rect_for_enemy(target_enemy = null) -> TextureRect:
+	if target_enemy == null:
+		return enemy_art_rect
+	for i in enemies.size():
+		if enemies[i] != target_enemy:
+			continue
+		if i >= enemy_panels.size():
+			break
+		var data: Dictionary = enemy_panels[i]
+		return data.get("art_rect", enemy_art_rect)
+	return enemy_art_rect
+
+
+func _flash_enemy(target_enemy = null) -> void:
+	var art_rect := _art_rect_for_enemy(target_enemy)
+	if art_rect == null:
 		return
 	var t := create_tween()
-	t.tween_property(enemy_art_rect, "modulate", Color(1.4, 0.8, 0.7, 1.0), 0.04)
-	t.tween_property(enemy_art_rect, "modulate", Color.WHITE, 0.18)
-	# Quick shake.
-	var origin := enemy_art_rect.position
+	t.tween_property(art_rect, "modulate", Color(1.55, 0.70, 0.55, 1.0), 0.04)
+	t.tween_property(art_rect, "modulate", Color.WHITE, 0.16)
+	var origin := art_rect.position
+	var scale_origin := art_rect.scale
 	var shake := create_tween()
-	shake.tween_property(enemy_art_rect, "position", origin + Vector2(8, 0), 0.04)
-	shake.tween_property(enemy_art_rect, "position", origin + Vector2(-6, 0), 0.04)
-	shake.tween_property(enemy_art_rect, "position", origin, 0.04)
+	shake.tween_property(art_rect, "position", origin + Vector2(18, -2), 0.035)
+	shake.parallel().tween_property(art_rect, "scale", scale_origin * 1.06, 0.035)
+	shake.tween_property(art_rect, "position", origin + Vector2(-14, 3), 0.04)
+	shake.tween_property(art_rect, "position", origin + Vector2(8, -1), 0.035)
+	shake.tween_property(art_rect, "position", origin, 0.055)
+	shake.parallel().tween_property(art_rect, "scale", scale_origin, 0.055)
 
 
 func _flash_player() -> void:
 	if player_art_rect == null:
 		return
 	var t := create_tween()
-	t.tween_property(player_art_rect, "modulate", Color(1.3, 0.7, 0.6, 1.0), 0.04)
+	t.tween_property(player_art_rect, "modulate", Color(1.45, 0.62, 0.52, 1.0), 0.04)
 	t.tween_property(player_art_rect, "modulate", Color.WHITE, 0.18)
+	var origin := player_art_rect.position
+	var scale_origin := player_art_rect.scale
+	var shake := create_tween()
+	shake.tween_property(player_art_rect, "position", origin + Vector2(-22, 4), 0.035)
+	shake.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.05, 0.035)
+	shake.tween_property(player_art_rect, "position", origin + Vector2(14, -3), 0.04)
+	shake.tween_property(player_art_rect, "position", origin + Vector2(-8, 1), 0.035)
+	shake.tween_property(player_art_rect, "position", origin, 0.055)
+	shake.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.055)
+
+
+func _play_player_attack_commit() -> Tween:
+	if player_art_rect == null or fast_resolve:
+		return null
+	var origin := player_art_rect.position
+	var scale_origin := player_art_rect.scale
+	var t := create_tween()
+	t.set_trans(Tween.TRANS_QUAD)
+	t.set_ease(Tween.EASE_OUT)
+	t.tween_property(player_art_rect, "position", origin + Vector2(34, -4), 0.07)
+	t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.05, 0.07)
+	t.tween_property(player_art_rect, "position", origin, 0.10)
+	t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.10)
+	return t
 
 
 func _screen_shake(strength: float = 6.0, duration: float = 0.18) -> void:
@@ -1642,14 +1706,59 @@ func _resolve_enemy_turn() -> void:
 		_update_ui()
 		_pulse_intent()
 		await _wait_combat(0.22)
+		var has_attack := _enemy_move_has_attack(inst)
+		if has_attack:
+			await _play_enemy_attack_windup(inst)
 		if inst.current_move != null and String(inst.current_move.id) == "mv_lost_pages":
 			_spawn_lost_pages_storm()
 			var am = _audio()
 			if am != null:
 				am.play_sfx("sfx_move_paper_storm")
 		_set_log(inst.resolve_intent(self))
+		if has_attack:
+			_settle_enemy_attack_pose(inst)
 		_update_ui()
 		await _wait_combat(0.42)
+
+
+func _enemy_move_has_attack(inst) -> bool:
+	return inst != null and inst.current_move != null and int(inst.current_move.damage) > 0
+
+
+func _play_enemy_attack_windup(inst) -> void:
+	if fast_resolve:
+		return
+	var art_rect := _art_rect_for_enemy(inst)
+	if art_rect == null:
+		return
+	var origin := art_rect.position
+	var scale_origin := art_rect.scale
+	art_rect.set_meta("attack_rest_position", origin)
+	art_rect.set_meta("attack_rest_scale", scale_origin)
+	var t := create_tween()
+	t.set_trans(Tween.TRANS_QUAD)
+	t.set_ease(Tween.EASE_OUT)
+	t.tween_property(art_rect, "position", origin + Vector2(16, -6), 0.12)
+	t.parallel().tween_property(art_rect, "scale", scale_origin * 1.06, 0.12)
+	t.parallel().tween_property(art_rect, "modulate", Color(1.18, 0.86, 0.68, 1.0), 0.12)
+	t.tween_property(art_rect, "position", origin + Vector2(-42, 8), 0.09)
+	t.parallel().tween_property(art_rect, "scale", scale_origin * 1.10, 0.09)
+	t.parallel().tween_property(art_rect, "modulate", Color(1.35, 0.72, 0.50, 1.0), 0.09)
+	await t.finished
+
+
+func _settle_enemy_attack_pose(inst) -> void:
+	var art_rect := _art_rect_for_enemy(inst)
+	if art_rect == null:
+		return
+	var origin: Vector2 = art_rect.get_meta("attack_rest_position", art_rect.position)
+	var scale_origin: Vector2 = art_rect.get_meta("attack_rest_scale", Vector2.ONE)
+	var t := create_tween()
+	t.set_trans(Tween.TRANS_QUAD)
+	t.set_ease(Tween.EASE_OUT)
+	t.tween_property(art_rect, "position", origin, 0.11)
+	t.parallel().tween_property(art_rect, "scale", scale_origin, 0.11)
+	t.parallel().tween_property(art_rect, "modulate", Color.WHITE, 0.11)
 
 
 func _wait_combat(seconds: float) -> void:
@@ -1673,14 +1782,19 @@ func deal_damage(target, amount: int) -> void:
 	damage -= blocked
 	target.hp = max(0, target.hp - damage)
 	if damage > 0:
-		_spawn_hit_effect()
-		_spawn_float_text("-%d" % damage, _float_anchor_for(enemy_art_rect, Vector2(900, 250)), Color(1.0, 0.36, 0.22))
+		var target_art := _art_rect_for_enemy(target)
+		var hit_anchor := _float_anchor_for(target_art, Vector2(900, 250))
+		_spawn_hit_effect(hit_anchor - Vector2(48, 48))
+		_spawn_float_text("-%d" % damage, hit_anchor, Color(1.0, 0.36, 0.22))
+		_flash_enemy(target)
 		var am = _audio()
 		if am != null:
 			am.play_sfx_pitched("sfx_combat_hit", 1.0)
 		if damage >= 12:
 			# Big hits get a heavier shake to sell the impact.
 			_screen_shake(8.0, 0.20)
+		else:
+			_screen_shake(3.0, 0.10)
 
 
 func gain_player_block(amount: int) -> void:
@@ -1883,6 +1997,8 @@ func _take_player_damage(amount: int) -> void:
 		_flash_player()
 		if damage >= 10:
 			_screen_shake(7.0, 0.20)
+		else:
+			_screen_shake(3.5, 0.12)
 		# Fire hp_threshold relics — once per combat, when crossing the
 		# configured fraction (e.g. 0.5 = below 50% HP). RelicManager handles
 		# the latch so re-entering the threshold doesn't re-fire.
@@ -2086,16 +2202,23 @@ func _on_reward_card_chosen(card_id: String) -> void:
 
 
 func _on_reward_skipped() -> void:
-	_set_log("Skipped card reward.")
+	_set_log(_tr("combat.log.skipped_reward", "Skipped card reward."))
 	combat_reward_skipped.emit(player_hp)
 
 
 func _update_ui() -> void:
 	combat_title_label.text = _localized_combat_title()
+	if player_title_label != null:
+		player_title_label.text = _localized_player_name()
+	if player_art_rect != null:
+		var art_path := _player_art_path()
+		if String(player_art_rect.get_meta("texture_path", "")) != art_path:
+			player_art_rect.texture = _load_character_texture(art_path)
+			player_art_rect.set_meta("texture_path", art_path)
 	player_label.text = _tr("combat.top_player", "HP %d/%d    Block %d    Energy %d/%d") % [player_hp, player_max_hp, player_block, player_energy, base_energy]
 	piles_label.text = _tr("combat.top_piles", "Draw %d    Hand %d    Discard %d    Exhaust %d") % [deck.draw_pile.size(), deck.hand.size(), deck.discard_pile.size(), deck.exhaust_pile.size()]
 	_update_relic_icon_row()
-	player_label.tooltip_text = "Player statuses: %s" % (_status_text(player_statuses) if _status_text(player_statuses) != "" else "none")
+	player_label.tooltip_text = _tr("combat.statuses", "Statuses: %s") % (_status_text(player_statuses) if _status_text(player_statuses) != "" else _tr("combat.none", "none"))
 	player_hp_bar.max_value = player_max_hp
 	_tween_bar(player_hp_bar, player_hp)
 	player_block_label.text = "%s    %s" % [_tr("combat.block", "Block: %d") % player_block, _tr("combat.energy", "ENERGY\n%d/%d").replace("\n", " ") % [player_energy, base_energy]]
@@ -2291,9 +2414,11 @@ func _intent_display_text_for(target_enemy) -> String:
 
 
 func _localized_combat_title() -> String:
-	if configured_encounter_id != "":
+	if configured_encounter_id != "" and configured_encounter_id.find("+") < 0:
 		return _localized_name(configured_encounter_id, configured_title)
 	match configured_title:
+		"Archive Fight":
+			return _tr("map.node.combat.title", configured_title)
 		"Dust Scribe":
 			return _localized_name("e_dust_scribe", configured_title)
 		"Loose Folio":
@@ -2451,6 +2576,10 @@ func _update_relic_icon_row() -> void:
 
 
 func _load_png_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var imported = load(path)
+		if imported is Texture2D:
+			return imported
 	var image := Image.new()
 	var err := image.load(path)
 	if err != OK:
@@ -2461,10 +2590,15 @@ func _load_png_texture(path: String) -> Texture2D:
 
 func _load_character_texture(path: String) -> Texture2D:
 	var image := Image.new()
-	var err := image.load(path)
-	if err != OK:
-		push_warning("Failed to load character image: %s" % path)
-		return null
+	if ResourceLoader.exists(path):
+		var imported = load(path)
+		if imported is Texture2D:
+			image = imported.get_image()
+	if image.is_empty():
+		var err := image.load(path)
+		if err != OK:
+			push_warning("Failed to load character image: %s" % path)
+			return null
 	var bounds := _alpha_bounds(image)
 	if bounds.size.x <= 0 or bounds.size.y <= 0:
 		return ImageTexture.create_from_image(image)
@@ -2582,7 +2716,7 @@ func _spawn_block_effect() -> void:
 	tween.tween_callback(pulse.queue_free)
 
 
-func _spawn_hit_effect() -> void:
+func _spawn_hit_effect(effect_position: Vector2 = Vector2(850, 226)) -> void:
 	if effect_layer == null:
 		return
 	var spark := TextureRect.new()
@@ -2591,7 +2725,7 @@ func _spawn_hit_effect() -> void:
 	spark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	spark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	spark.custom_minimum_size = Vector2(96, 96)
-	spark.position = Vector2(850, 226)
+	spark.position = effect_position
 	effect_layer.add_child(spark)
 	var tween := create_tween()
 	tween.tween_property(spark, "scale", Vector2(1.25, 1.25), 0.16)

@@ -11,6 +11,7 @@ const CardInstanceScript := preload("res://scripts/cards/card_instance.gd")
 const AscensionConfigScript := preload("res://scripts/core/ascension_config.gd")
 const CharacterCatalogScript := preload("res://scripts/core/character_catalog.gd")
 const SettingsManagerScript := preload("res://scripts/core/settings_manager.gd")
+const ResourcePathUtilScript := preload("res://scripts/core/resource_path_util.gd")
 
 var save_manager
 var settings_manager
@@ -35,11 +36,13 @@ var selected_ascension_level := 0
 # Currently-selected character for the next "Start New Run". The active run
 # stores its own snapshot in `character_id`, so changing the menu pick after
 # starting a run never retroactively rewrites it.
-var selected_character_id := "char_vanguard"
-var character_id := "char_vanguard"
+var selected_character_id := "char_assassin"
+var pending_new_run_character_id := ""
+var character_id := "char_assassin"
 var character_catalog: Dictionary = {}
 var current_act := 1
-const FINAL_ACT := 3
+# Vertical slice build: Act I is the complete demo loop.
+const FINAL_ACT := 1
 var rng_state := {
 	"map_rng": 1,
 	"combat_rng": 2,
@@ -230,7 +233,7 @@ func _load_legacy_save(data: Dictionary) -> void:
 	floor_index = 1
 
 
-func _start_new_run() -> void:
+func _start_new_run(character_override: String = "") -> void:
 	run_id = _make_run_id()
 	run_seed = randi_range(1, 2147483647)
 	rng_state = {"map_rng": run_seed, "combat_rng": run_seed + 11, "reward_rng": run_seed + 23, "event_rng": run_seed + 37}
@@ -239,9 +242,17 @@ func _start_new_run() -> void:
 	current_node_id = "L0_0"
 	MapGeneratorScript.mark_visited(map_nodes, current_node_id)
 	ascension_level = AscensionConfigScript.clamp_level(selected_ascension_level)
+	var locked_character_id := character_override
+	if locked_character_id == "":
+		locked_character_id = pending_new_run_character_id if pending_new_run_character_id != "" else selected_character_id
+	var locked_data = CharacterCatalogScript.resolve(character_catalog, locked_character_id)
+	if locked_data == null or not bool(locked_data.is_playable):
+		locked_character_id = "char_vanguard"
+	selected_character_id = locked_character_id
 	# Lock in the character chosen on the menu — the active run keeps its own
 	# id so changing the menu later doesn't mutate the in-progress run.
-	character_id = selected_character_id
+	character_id = locked_character_id
+	pending_new_run_character_id = ""
 	var char_data = CharacterCatalogScript.resolve(character_catalog, character_id)
 	run_deck_ids = _starter_deck()
 	for curse_id in AscensionConfigScript.starting_curses(ascension_level):
@@ -351,21 +362,15 @@ func _relics_to_save() -> Array:
 
 func _load_content_databases() -> void:
 	card_database.clear()
-	var card_dir := DirAccess.open("res://data/cards")
-	if card_dir != null:
-		for file_name in card_dir.get_files():
-			if file_name.ends_with(".tres"):
-				var card = load("res://data/cards/%s" % file_name)
-				if card != null:
-					card_database[String(card.get("id"))] = card
+	for path in ResourcePathUtilScript.data_resource_paths("res://data/cards"):
+		var card = load(path)
+		if card != null:
+			card_database[String(card.get("id"))] = card
 	relic_database.clear()
-	var relic_dir := DirAccess.open("res://data/relics")
-	if relic_dir != null:
-		for file_name in relic_dir.get_files():
-			if file_name.ends_with(".tres"):
-				var relic = load("res://data/relics/%s" % file_name)
-				if relic != null:
-					relic_database[String(relic.get("id"))] = relic
+	for path in ResourcePathUtilScript.data_resource_paths("res://data/relics"):
+		var relic = load(path)
+		if relic != null:
+			relic_database[String(relic.get("id"))] = relic
 	potion_database = PotionCatalogScript.load_potions()
 
 
@@ -444,8 +449,8 @@ func _show_map() -> void:
 	root.offset_left = 32
 	root.offset_top = 14
 	root.offset_right = -32
-	root.offset_bottom = -22
-	root.add_theme_constant_override("separation", 10)
+	root.offset_bottom = -34
+	root.add_theme_constant_override("separation", 8)
 	screen.add_child(root)
 
 	var header := HBoxContainer.new()
@@ -518,7 +523,7 @@ func _show_map() -> void:
 	deck_box.add_child(deck_list)
 
 	var map_and_side := Control.new()
-	map_and_side.custom_minimum_size = Vector2(0, 500)
+	map_and_side.custom_minimum_size = Vector2(0, 456)
 	map_and_side.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(map_and_side)
 
@@ -576,7 +581,8 @@ func _show_main_menu() -> void:
 
 	var hero := TextureRect.new()
 	hero.texture = _character_sprite_texture(selected_character_id)
-	hero.expand_mode = TextureRect.EXPAND_FIT_HEIGHT_PROPORTIONAL
+	hero.ignore_texture_size = true
+	hero.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	hero.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	hero.set_anchors_preset(Control.PRESET_LEFT_WIDE)
 	hero.offset_left = 42
@@ -587,7 +593,8 @@ func _show_main_menu() -> void:
 
 	var key := TextureRect.new()
 	key.texture = _load_png_texture("res://art/generated/sprites/archive_key.png")
-	key.expand_mode = TextureRect.EXPAND_FIT_HEIGHT_PROPORTIONAL
+	key.ignore_texture_size = true
+	key.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	key.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	key.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
 	key.offset_left = -230
@@ -599,24 +606,24 @@ func _show_main_menu() -> void:
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.offset_left = -190
-	panel.offset_top = -230
+	panel.offset_top = -280
 	panel.offset_right = 350
-	panel.offset_bottom = 210
+	panel.offset_bottom = 280
 	panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.035, 0.034, 0.032, 0.72), Color(0.68, 0.50, 0.24, 0.70)))
 	screen.add_child(panel)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 12)
+	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
 
 	var logo_holder := CenterContainer.new()
-	logo_holder.custom_minimum_size = Vector2(0, 132)
+	logo_holder.custom_minimum_size = Vector2(0, 98)
 	logo_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_child(logo_holder)
 
 	var logo := TextureRect.new()
 	logo.texture = _load_png_texture("res://art/generated/ui/living_archive_logo.png")
-	logo.custom_minimum_size = Vector2(154, 132)
+	logo.custom_minimum_size = Vector2(126, 98)
 	logo.ignore_texture_size = true
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -625,7 +632,7 @@ func _show_main_menu() -> void:
 	var title := Label.new()
 	title.text = _tr("main.title", "LIVING ARCHIVE")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_font_size_override("font_size", 28)
 	box.add_child(title)
 
 	var subtitle := Label.new()
@@ -641,20 +648,20 @@ func _show_main_menu() -> void:
 
 	var continue_button := Button.new()
 	continue_button.text = _tr("main.continue", "Continue Run")
-	continue_button.custom_minimum_size = Vector2(0, 52)
+	continue_button.custom_minimum_size = Vector2(0, 44)
 	continue_button.disabled = run_deck_ids.is_empty()
 	continue_button.pressed.connect(func() -> void: _show_map())
 	box.add_child(continue_button)
 
 	var new_button := Button.new()
 	new_button.text = _tr("main.new", "New Run")
-	new_button.custom_minimum_size = Vector2(0, 52)
+	new_button.custom_minimum_size = Vector2(0, 44)
 	new_button.pressed.connect(_show_character_select_menu)
 	box.add_child(new_button)
 
 	var settings_button := Button.new()
 	settings_button.text = _tr("main.settings", "Settings")
-	settings_button.custom_minimum_size = Vector2(0, 46)
+	settings_button.custom_minimum_size = Vector2(0, 40)
 	settings_button.pressed.connect(func() -> void:
 		pause_overlay = _build_pause_overlay()
 		add_child(pause_overlay)
@@ -694,16 +701,16 @@ func _show_character_select_menu() -> void:
 	veil.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.add_child(veil)
 
-	var root := VBoxContainer.new()
+	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.offset_left = 34
-	root.offset_top = 14
+	root.offset_top = 10
 	root.offset_right = -34
-	root.offset_bottom = -12
-	root.add_theme_constant_override("separation", 8)
+	root.offset_bottom = -24
 	screen.add_child(root)
 
 	var header := HBoxContainer.new()
+	_pin_run_control(header, 0, 0, 1212, 58)
 	header.add_theme_constant_override("separation", 14)
 	root.add_child(header)
 
@@ -714,37 +721,38 @@ func _show_character_select_menu() -> void:
 
 	var title := Label.new()
 	title.text = _tr("select.title", "Choose Your Archivist")
-	title.add_theme_font_size_override("font_size", 25)
+	title.add_theme_font_size_override("font_size", 22)
 	title_box.add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = _tr("select.subtitle", "Select a character, review the starting kit, then set Ascension before entering the archive.")
 	subtitle.add_theme_font_size_override("font_size", 13)
+	subtitle.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	subtitle.modulate = Color(0.84, 0.78, 0.68, 0.92)
 	title_box.add_child(subtitle)
 
 	var back := Button.new()
 	back.text = _tr("select.back", "Back")
-	back.custom_minimum_size = Vector2(108, 42)
+	back.custom_minimum_size = Vector2(104, 38)
 	back.pressed.connect(_show_main_menu)
 	header.add_child(back)
 
 	var body := HBoxContainer.new()
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 18)
+	_pin_run_control(body, 0, 70, 1212, 602)
+	body.add_theme_constant_override("separation", 14)
 	root.add_child(body)
 
 	var roster_panel := PanelContainer.new()
-	roster_panel.custom_minimum_size = Vector2(520, 0)
+	roster_panel.custom_minimum_size = Vector2(496, 0)
 	roster_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	roster_panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.034, 0.030, 0.026, 0.72), Color(0.72, 0.52, 0.24, 0.66)))
 	body.add_child(roster_panel)
 
 	var roster := GridContainer.new()
 	roster.columns = 2
-	roster.add_theme_constant_override("separation", 16)
-	roster.add_theme_constant_override("h_separation", 16)
-	roster.add_theme_constant_override("v_separation", 16)
+	roster.add_theme_constant_override("separation", 12)
+	roster.add_theme_constant_override("h_separation", 12)
+	roster.add_theme_constant_override("v_separation", 12)
 	roster_panel.add_child(roster)
 
 	var sorted_char_ids: Array = _playable_character_ids()
@@ -760,15 +768,11 @@ func _show_character_select_menu() -> void:
 	details_panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.026, 0.027, 0.027, 0.82), Color(0.64, 0.48, 0.24, 0.70)))
 	body.add_child(details_panel)
 
-	var detail_scroll := ScrollContainer.new()
-	detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	details_panel.add_child(detail_scroll)
-
 	var detail := VBoxContainer.new()
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	detail.add_theme_constant_override("separation", 12)
-	detail_scroll.add_child(detail)
+	detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	detail.add_theme_constant_override("separation", 5)
+	details_panel.add_child(detail)
 
 	var data = CharacterCatalogScript.resolve(character_catalog, selected_character_id)
 	var name_text := selected_character_id
@@ -785,20 +789,20 @@ func _show_character_select_menu() -> void:
 
 	var detail_title := Label.new()
 	detail_title.text = name_text
-	detail_title.add_theme_font_size_override("font_size", 30)
+	detail_title.add_theme_font_size_override("font_size", 23)
 	detail.add_child(detail_title)
 
 	var detail_subtitle := Label.new()
 	detail_subtitle.text = subtitle_text
-	detail_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	detail_subtitle.add_theme_font_size_override("font_size", 15)
+	detail_subtitle.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	detail_subtitle.add_theme_font_size_override("font_size", 12)
 	detail_subtitle.modulate = Color(0.95, 0.84, 0.62, 0.94)
 	detail.add_child(detail_subtitle)
 
 	var trait_grid := GridContainer.new()
 	trait_grid.columns = 2
-	trait_grid.add_theme_constant_override("h_separation", 10)
-	trait_grid.add_theme_constant_override("v_separation", 10)
+	trait_grid.add_theme_constant_override("h_separation", 8)
+	trait_grid.add_theme_constant_override("v_separation", 8)
 	detail.add_child(trait_grid)
 	trait_grid.add_child(_build_stat_tile(_tr("select.hp", "Starting HP"), "%d" % (starting_hp - AscensionConfigScript.player_max_hp_penalty(selected_ascension_level))))
 	trait_grid.add_child(_build_stat_tile(_tr("select.relic", "Relic"), _relic_display_name(relic_id)))
@@ -806,22 +810,22 @@ func _show_character_select_menu() -> void:
 	trait_grid.add_child(_build_stat_tile(_tr("select.asc", "Ascension"), "A%d" % selected_ascension_level))
 
 	var traits := Label.new()
-	traits.text = _character_trait_text(selected_character_id)
-	traits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	traits.add_theme_font_size_override("font_size", 14)
+	traits.text = _character_trait_text(selected_character_id).replace("\n", "  ")
+	traits.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	traits.add_theme_font_size_override("font_size", 12)
 	traits.modulate = Color(0.86, 0.82, 0.74, 0.94)
 	detail.add_child(traits)
 
 	var deck_title := Label.new()
 	deck_title.text = _tr("select.cards", "Starting Cards")
-	deck_title.add_theme_font_size_override("font_size", 18)
+	deck_title.add_theme_font_size_override("font_size", 14)
 	detail.add_child(deck_title)
 
 	var deck_list := Label.new()
 	deck_list.text = _starter_deck_preview(selected_character_id)
-	deck_list.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	deck_list.custom_minimum_size = Vector2(0, 76)
-	deck_list.add_theme_font_size_override("font_size", 13)
+	deck_list.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	deck_list.custom_minimum_size = Vector2(0, 24)
+	deck_list.add_theme_font_size_override("font_size", 12)
 	deck_list.modulate = Color(0.82, 0.78, 0.70, 0.92)
 	detail.add_child(deck_list)
 
@@ -829,7 +833,7 @@ func _show_character_select_menu() -> void:
 	asc_panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.055, 0.044, 0.030, 0.62), Color(0.72, 0.54, 0.26, 0.64)))
 	detail.add_child(asc_panel)
 	var asc_box := VBoxContainer.new()
-	asc_box.add_theme_constant_override("separation", 8)
+	asc_box.add_theme_constant_override("separation", 5)
 	asc_panel.add_child(asc_box)
 	var asc_row := HBoxContainer.new()
 	asc_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -838,11 +842,11 @@ func _show_character_select_menu() -> void:
 	var asc_label := Label.new()
 	asc_label.text = _tr("select.difficulty", "Difficulty")
 	asc_label.custom_minimum_size = Vector2(120, 0)
-	asc_label.add_theme_font_size_override("font_size", 16)
+	asc_label.add_theme_font_size_override("font_size", 14)
 	asc_row.add_child(asc_label)
 	var asc_minus := Button.new()
 	asc_minus.text = "-"
-	asc_minus.custom_minimum_size = Vector2(42, 34)
+	asc_minus.custom_minimum_size = Vector2(40, 30)
 	asc_row.add_child(asc_minus)
 	var asc_value := Label.new()
 	asc_value.text = "A%d" % selected_ascension_level
@@ -852,12 +856,13 @@ func _show_character_select_menu() -> void:
 	asc_row.add_child(asc_value)
 	var asc_plus := Button.new()
 	asc_plus.text = "+"
-	asc_plus.custom_minimum_size = Vector2(42, 34)
+	asc_plus.custom_minimum_size = Vector2(40, 30)
 	asc_row.add_child(asc_plus)
 	var asc_summary := Label.new()
 	asc_summary.text = AscensionConfigScript.summary(selected_ascension_level)
-	asc_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	asc_summary.add_theme_font_size_override("font_size", 13)
+	asc_summary.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	asc_summary.custom_minimum_size = Vector2(0, 24)
+	asc_summary.add_theme_font_size_override("font_size", 12)
 	asc_box.add_child(asc_summary)
 	asc_minus.pressed.connect(func() -> void:
 		selected_ascension_level = AscensionConfigScript.clamp_level(selected_ascension_level - 1)
@@ -869,6 +874,7 @@ func _show_character_select_menu() -> void:
 	)
 
 	var footer := HBoxContainer.new()
+	_pin_run_control(footer, 0, 616, 1212, 672)
 	footer.alignment = BoxContainer.ALIGNMENT_END
 	footer.add_theme_constant_override("separation", 12)
 	root.add_child(footer)
@@ -877,15 +883,28 @@ func _show_character_select_menu() -> void:
 	warning.text = _tr("select.warning", "Starting a new run will replace the current saved run.")
 	warning.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	warning.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	warning.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	warning.add_theme_font_size_override("font_size", 12)
 	warning.modulate = Color(0.94, 0.72, 0.48, 0.86)
 	footer.add_child(warning)
 
 	var start := Button.new()
 	start.text = _tr("select.start", "Enter the Archive")
-	start.custom_minimum_size = Vector2(220, 46)
-	start.add_theme_font_size_override("font_size", 18)
+	start.custom_minimum_size = Vector2(204, 40)
+	start.add_theme_font_size_override("font_size", 16)
 	start.pressed.connect(_on_new_run_confirmed)
 	footer.add_child(start)
+
+
+func _pin_run_control(control: Control, left: float, top: float, right: float, bottom: float) -> void:
+	control.anchor_left = 0.0
+	control.anchor_top = 0.0
+	control.anchor_right = 0.0
+	control.anchor_bottom = 0.0
+	control.offset_left = left
+	control.offset_top = top
+	control.offset_right = right
+	control.offset_bottom = bottom
 
 
 func _build_character_portrait_card(char_id: String) -> Control:
@@ -901,7 +920,7 @@ func _build_character_portrait_card(char_id: String) -> Control:
 			display_name = "%s" % _character_class_display_name(data)
 		subtitle = _tr("char.%s.subtitle" % String(data.id), String(data.subtitle))
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(210, 212)
+	button.custom_minimum_size = Vector2(204, 180)
 	button.text = ""
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.050, 0.044, 0.036, 0.66), color.darkened(0.26)))
@@ -920,13 +939,13 @@ func _build_character_portrait_card(char_id: String) -> Control:
 	box.offset_top = 10
 	box.offset_right = -10
 	box.offset_bottom = -10
-	box.add_theme_constant_override("separation", 8)
+	box.add_theme_constant_override("separation", 5)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(box)
 
 	var art := TextureRect.new()
 	art.texture = _character_sprite_texture(char_id)
-	art.custom_minimum_size = Vector2(0, 136)
+	art.custom_minimum_size = Vector2(0, 108)
 	art.ignore_texture_size = true
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -936,7 +955,7 @@ func _build_character_portrait_card(char_id: String) -> Control:
 	var name := Label.new()
 	name.text = display_name
 	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name.add_theme_font_size_override("font_size", 20)
+	name.add_theme_font_size_override("font_size", 17)
 	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(name)
 
@@ -952,7 +971,7 @@ func _build_character_portrait_card(char_id: String) -> Control:
 
 func _build_stat_tile(label_text: String, value_text: String) -> Control:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(210, 60)
+	panel.custom_minimum_size = Vector2(196, 44)
 	panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.048, 0.044, 0.038, 0.62), Color(0.44, 0.34, 0.20, 0.58)))
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 2)
@@ -964,7 +983,7 @@ func _build_stat_tile(label_text: String, value_text: String) -> Control:
 	box.add_child(label)
 	var value := Label.new()
 	value.text = value_text
-	value.add_theme_font_size_override("font_size", 16)
+	value.add_theme_font_size_override("font_size", 14)
 	value.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	box.add_child(value)
 	return panel
@@ -1885,26 +1904,26 @@ func _show_campfire() -> void:
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -470
-	panel.offset_top = -245
-	panel.offset_right = 470
-	panel.offset_bottom = 245
-	panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.055, 0.036, 0.024, 0.82), Color(0.86, 0.54, 0.24, 0.72)))
+	panel.offset_left = -520
+	panel.offset_top = -265
+	panel.offset_right = 520
+	panel.offset_bottom = 265
+	panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.055, 0.036, 0.024, 0.64), Color(0.86, 0.54, 0.24, 0.72)))
 	screen.add_child(panel)
 
 	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 24)
+	box.add_theme_constant_override("separation", 28)
 	panel.add_child(box)
 
 	var story_box := VBoxContainer.new()
-	story_box.custom_minimum_size = Vector2(420, 0)
-	story_box.add_theme_constant_override("separation", 14)
+	story_box.custom_minimum_size = Vector2(440, 0)
+	story_box.add_theme_constant_override("separation", 12)
 	box.add_child(story_box)
 
 	var title := Label.new()
 	title.text = _tr("camp.title", "Waxlight Nook")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_font_size_override("font_size", 28)
 	story_box.add_child(title)
 
 	var state := Label.new()
@@ -1917,7 +1936,7 @@ func _show_campfire() -> void:
 	var body := Label.new()
 	body.text = _tr("camp.body", "Warm wax pools beside an old blade. The archive is quiet for one breath.")
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.add_theme_font_size_override("font_size", 16)
+	body.add_theme_font_size_override("font_size", 15)
 	story_box.add_child(body)
 
 	var scene_art := TextureRect.new()
@@ -1925,12 +1944,13 @@ func _show_campfire() -> void:
 	scene_art.ignore_texture_size = true
 	scene_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	scene_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	scene_art.custom_minimum_size = Vector2(0, 190)
+	scene_art.custom_minimum_size = Vector2(0, 244)
+	scene_art.modulate = Color(1.0, 0.88, 0.66, 0.98)
 	story_box.add_child(scene_art)
 
 	var action_box := VBoxContainer.new()
 	action_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	action_box.add_theme_constant_override("separation", 12)
+	action_box.add_theme_constant_override("separation", 14)
 	box.add_child(action_box)
 
 	_add_campfire_action(action_box, _tr("camp.rest", "Rest: heal 30% HP"), _tr("camp.rest_hint", "Heal and return to the map."), _load_png_texture("res://art/generated/ui/campfire_rest_icon.png"), Callable(self, "_campfire_rest"), true)
@@ -1944,11 +1964,17 @@ func _show_campfire() -> void:
 
 func _add_campfire_action(parent: VBoxContainer, title_text: String, hint_text: String, icon: Texture2D, action: Callable, enabled: bool) -> void:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, 86)
+	button.custom_minimum_size = Vector2(0, 94)
 	button.disabled = not enabled
+	button.tooltip_text = hint_text
 	button.text = title_text
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.tooltip_text = hint_text
+	button.add_theme_font_size_override("font_size", 15)
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_stylebox_override("normal", _choice_card_box(Color(0.090, 0.060, 0.034, 0.78), Color(0.66, 0.42, 0.18, 0.78), 1))
+	button.add_theme_stylebox_override("hover", _choice_card_box(Color(0.125, 0.076, 0.038, 0.90), Color(1.00, 0.68, 0.28, 0.96), 2))
+	button.add_theme_stylebox_override("pressed", _choice_card_box(Color(0.155, 0.088, 0.046, 0.96), Color(1.00, 0.78, 0.34, 1.0), 2))
+	button.add_theme_stylebox_override("disabled", _choice_card_box(Color(0.050, 0.045, 0.040, 0.68), Color(0.28, 0.25, 0.22, 0.75), 1))
 	button.pressed.connect(action)
 	parent.add_child(button)
 
@@ -1972,7 +1998,26 @@ func _campfire_rest() -> void:
 	var am = _audio()
 	if am != null:
 		am.play_sfx("sfx_campfire_rest")
-	_advance_after_noncombat()
+	_show_rest_feedback()
+
+
+func _show_rest_feedback() -> void:
+	if current_screen == null:
+		_advance_after_noncombat()
+		return
+	var overlay := ColorRect.new()
+	overlay.color = Color(1.0, 0.55, 0.18, 0.0)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	current_screen.add_child(overlay)
+	var t := create_tween()
+	t.tween_property(overlay, "color:a", 0.26, 0.14)
+	t.tween_property(overlay, "color:a", 0.0, 0.32)
+	t.tween_callback(func() -> void:
+		if is_instance_valid(overlay):
+			overlay.queue_free()
+		_advance_after_noncombat()
+	)
 
 
 func _campfire_upgrade_card(index: int) -> void:
@@ -2435,39 +2480,51 @@ func _show_choice_screen(title_text: String, body_text: String, choices: Array) 
 	bg_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	bg_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	bg_art.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg_art.modulate = Color(1, 1, 1, 0.58)
+	bg_art.modulate = Color(1, 1, 1, 0.72)
 	screen.add_child(bg_art)
+
+	var vignette := ColorRect.new()
+	vignette.color = Color(0.0, 0.0, 0.0, 0.36)
+	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.add_child(vignette)
 
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -460
-	panel.offset_top = -240
-	panel.offset_right = 460
-	panel.offset_bottom = 240
+	panel.offset_left = -520
+	panel.offset_top = -260
+	panel.offset_right = 520
+	panel.offset_bottom = 260
+	panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.030, 0.026, 0.022, 0.58), Color(0.72, 0.52, 0.24, 0.70)))
 	screen.add_child(panel)
 
 	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 18)
+	box.add_theme_constant_override("separation", 24)
 	panel.add_child(box)
 
 	var story_box := VBoxContainer.new()
-	story_box.custom_minimum_size = Vector2(440, 0)
-	story_box.add_theme_constant_override("separation", 14)
+	story_box.custom_minimum_size = Vector2(430, 0)
+	story_box.add_theme_constant_override("separation", 12)
 	box.add_child(story_box)
 
 	var title := Label.new()
 	title.text = title_text
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(1.0, 0.86, 0.58))
 	story_box.add_child(title)
 
 	var state := Label.new()
 	state.text = _tr("modal.state", "HP %d/%d    Gold %d    Deck %d") % [player_hp, player_max_hp, gold, run_deck_ids.size()]
 	state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	state.add_theme_font_size_override("font_size", 14)
+	state.modulate = Color(0.92, 0.82, 0.64, 0.94)
 	story_box.add_child(state)
 
 	var body := Label.new()
 	body.text = body_text
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_font_size_override("font_size", 16)
+	body.modulate = Color(0.92, 0.87, 0.76, 0.96)
 	story_box.add_child(body)
 
 	var scene_art := TextureRect.new()
@@ -2475,13 +2532,14 @@ func _show_choice_screen(title_text: String, body_text: String, choices: Array) 
 	scene_art.ignore_texture_size = true
 	scene_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	scene_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	scene_art.custom_minimum_size = Vector2(0, 140)
+	scene_art.custom_minimum_size = Vector2(0, 176)
+	scene_art.modulate = Color(1, 1, 1, 0.96)
 	story_box.add_child(scene_art)
 
 	var choices_box := VBoxContainer.new()
-	choices_box.custom_minimum_size = Vector2(470, 0)
+	choices_box.custom_minimum_size = Vector2(500, 0)
 	choices_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	choices_box.add_theme_constant_override("separation", 12)
+	choices_box.add_theme_constant_override("separation", 14)
 	box.add_child(choices_box)
 
 	for choice in choices:
@@ -2493,11 +2551,17 @@ func _show_choice_screen(title_text: String, body_text: String, choices: Array) 
 
 func _add_choice_action(parent: VBoxContainer, title_text: String, hint_text: String, icon: Texture2D, action: Callable, enabled: bool = true) -> void:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, 78)
+	button.custom_minimum_size = Vector2(0, 92)
 	button.text = title_text
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_font_size_override("font_size", 15)
+	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = hint_text
 	button.disabled = not enabled
+	button.add_theme_stylebox_override("normal", _choice_card_box(Color(0.060, 0.048, 0.038, 0.82), Color(0.62, 0.44, 0.22, 0.76), 1))
+	button.add_theme_stylebox_override("hover", _choice_card_box(Color(0.090, 0.064, 0.044, 0.94), Color(0.98, 0.70, 0.30, 0.98), 2))
+	button.add_theme_stylebox_override("pressed", _choice_card_box(Color(0.110, 0.074, 0.050, 0.98), Color(1.0, 0.78, 0.36, 1.0), 2))
+	button.add_theme_stylebox_override("disabled", _choice_card_box(Color(0.045, 0.044, 0.042, 0.70), Color(0.26, 0.24, 0.22, 0.72), 1))
 	button.pressed.connect(action)
 	parent.add_child(button)
 
@@ -2505,22 +2569,25 @@ func _add_choice_action(parent: VBoxContainer, title_text: String, hint_text: St
 func _add_action_row_content(button: Button, title_text: String, hint_text: String, icon: Texture2D) -> void:
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.offset_left = 12
-	margin.offset_top = 8
-	margin.offset_right = -12
-	margin.offset_bottom = -8
+	margin.offset_left = 16
+	margin.offset_top = 0
+	margin.offset_right = -18
+	margin.offset_bottom = 0
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(margin)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	row.custom_minimum_size = Vector2(0, 56)
+	row.add_theme_constant_override("separation", 12)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_child(row)
 
 	if icon != null:
 		var icon_rect := TextureRect.new()
 		icon_rect.texture = icon
-		icon_rect.custom_minimum_size = Vector2(34, 34)
+		icon_rect.custom_minimum_size = Vector2(48, 48)
 		icon_rect.ignore_texture_size = true
 		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -2538,17 +2605,45 @@ func _add_action_row_content(button: Button, title_text: String, hint_text: Stri
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_color_override("font_color", Color(1.0, 0.88, 0.62))
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text_box.add_child(title)
 
 	if hint_text != "":
 		var hint := Label.new()
 		hint.text = hint_text
-		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hint.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		hint.add_theme_font_size_override("font_size", 12)
 		hint.modulate = Color(0.82, 0.76, 0.66, 0.88)
 		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		text_box.add_child(hint)
+
+
+func _choice_title_and_terms(text: String) -> Dictionary:
+	var separators := ["。", ".", "，", ","]
+	for separator in separators:
+		var idx := text.find(separator)
+		if idx > 0:
+			var title := text.substr(0, idx).strip_edges()
+			var terms := text.substr(idx + separator.length()).strip_edges()
+			return {"title": title, "terms": terms}
+	return {"title": text, "terms": ""}
+
+
+func _choice_card_box(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(border_width)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	return style
 
 
 func _choice_button_icon(choice_text: String) -> Texture2D:
@@ -2557,7 +2652,17 @@ func _choice_button_icon(choice_text: String) -> Texture2D:
 		return _load_png_texture("res://art/generated/ui/campfire_rest_icon.png")
 	if lower.find("upgrade") >= 0 or choice_text.find("升级") >= 0 or choice_text.find("锻牌") >= 0:
 		return _load_png_texture("res://art/generated/ui/campfire_upgrade_icon.png")
-	return null
+	if lower.find("remove") >= 0 or lower.find("burn") >= 0 or choice_text.find("移除") >= 0 or choice_text.find("烧") >= 0:
+		return _load_png_texture("res://art/generated/ui/card_back.png")
+	if lower.find("transform") >= 0 or lower.find("rewrite") >= 0 or choice_text.find("变化") >= 0 or choice_text.find("改写") >= 0:
+		return _load_png_texture("res://art/generated/sprites/archive_key.png")
+	if lower.find("gold") >= 0 or choice_text.find("金币") >= 0:
+		return _load_png_texture("res://art/generated/ui/price_tag.png")
+	if lower.find("relic") >= 0 or choice_text.find("遗物") >= 0:
+		return _load_png_texture("res://art/generated/ui/relic_slot.png")
+	if lower.find("potion") >= 0 or choice_text.find("药水") >= 0 or choice_text.find("装瓶") >= 0:
+		return _load_png_texture("res://art/generated/ui/potion_slot.png")
+	return _load_png_texture("res://art/generated/sprites/archive_key.png")
 
 
 func _choice_bg_color(title_text: String) -> Color:
@@ -2704,9 +2809,9 @@ func _show_run_summary(outcome: String) -> void:
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.offset_left = -480
-	panel.offset_top = -300
+	panel.offset_top = -286
 	panel.offset_right = 480
-	panel.offset_bottom = 300
+	panel.offset_bottom = 286
 	if outcome == "victory":
 		panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.07, 0.06, 0.04, 0.92), Color(0.78, 0.58, 0.22, 0.95)))
 	else:
@@ -2714,18 +2819,18 @@ func _show_run_summary(outcome: String) -> void:
 	screen.add_child(panel)
 
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 14)
+	root.add_theme_constant_override("separation", 10)
 	panel.add_child(root)
 
 	# Padding wrapper so content doesn't hug the panel border.
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", 24)
 	pad.add_theme_constant_override("margin_right", 24)
-	pad.add_theme_constant_override("margin_top", 18)
-	pad.add_theme_constant_override("margin_bottom", 18)
+	pad.add_theme_constant_override("margin_top", 14)
+	pad.add_theme_constant_override("margin_bottom", 14)
 	root.add_child(pad)
 	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 12)
+	inner.add_theme_constant_override("separation", 8)
 	pad.add_child(inner)
 
 	var title := Label.new()
@@ -2734,7 +2839,7 @@ func _show_run_summary(outcome: String) -> void:
 	else:
 		title.text = _tr("summary.defeat_title", "Run Lost - The Archive Shuts")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_font_size_override("font_size", 25)
 	if outcome == "victory":
 		title.modulate = Color(1.0, 0.86, 0.55)
 	else:
@@ -2755,14 +2860,14 @@ func _show_run_summary(outcome: String) -> void:
 	inner.add_child(sep)
 
 	var body_scroll := ScrollContainer.new()
-	body_scroll.custom_minimum_size = Vector2(0, 285)
+	body_scroll.custom_minimum_size = Vector2(0, 248)
 	body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	inner.add_child(body_scroll)
 
 	# Two-column body: left = headline numbers, right = deck composition + relics.
 	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 22)
+	body.add_theme_constant_override("separation", 18)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body_scroll.add_child(body)
 
@@ -2812,13 +2917,13 @@ func _show_run_summary(outcome: String) -> void:
 
 	var new_run_btn := Button.new()
 	new_run_btn.text = _tr("summary.new_run", "Start New Run")
-	new_run_btn.custom_minimum_size = Vector2(200, 50)
+	new_run_btn.custom_minimum_size = Vector2(190, 44)
 	new_run_btn.pressed.connect(_on_new_run_pressed)
 	buttons.add_child(new_run_btn)
 
 	var menu_btn := Button.new()
 	menu_btn.text = _tr("summary.main_menu", "Main Menu")
-	menu_btn.custom_minimum_size = Vector2(160, 50)
+	menu_btn.custom_minimum_size = Vector2(150, 44)
 	menu_btn.pressed.connect(func() -> void: _show_main_menu())
 	buttons.add_child(menu_btn)
 
@@ -2922,6 +3027,7 @@ func _on_new_run_pressed() -> void:
 func _on_new_run_confirmed() -> void:
 	if new_run_reset_in_progress:
 		return
+	pending_new_run_character_id = selected_character_id
 	new_run_reset_in_progress = true
 	call_deferred("_perform_new_run_reset")
 
@@ -2932,12 +3038,16 @@ func _perform_new_run_reset() -> void:
 	pause_overlay = null
 	_clear_screen_immediate()
 	save_manager.clear_run()
-	_start_new_run()
+	_start_new_run(pending_new_run_character_id)
 	_show_story_intro()
 	new_run_reset_in_progress = false
 
 
 func _load_png_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var imported = load(path)
+		if imported is Texture2D:
+			return imported
 	var image := Image.new()
 	var err := image.load(path)
 	if err != OK:

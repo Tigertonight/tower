@@ -209,6 +209,10 @@ func _load_node_icon_texture(node_type: String) -> Texture2D:
 	elif node_type == "treasure":
 		icon_id = "event"
 	var path := "res://art/generated/icons/node_%s.png" % icon_id
+	if ResourceLoader.exists(path):
+		var imported = load(path)
+		if imported is Texture2D:
+			return imported
 	var image := Image.new()
 	var err := image.load(path)
 	if err != OK:

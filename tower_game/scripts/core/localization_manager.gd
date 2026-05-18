@@ -7,7 +7,7 @@ const SAVE_PATH := "user://tower_settings.json"
 const EN := "en"
 const ZH := "zh"
 
-var language := EN
+var language := ZH
 
 var ui := {
 	"zh": {
@@ -52,6 +52,7 @@ var ui := {
 		"char.char_assassin.name": "刺客",
 		"char.char_assassin.subtitle": "页边匕首，标记一个名字，然后让页面忘记它。",
 		"char.char_assassin.traits": "定位：标记与连击刺客。\n优势：弃牌节奏、毒性压力、标记爆发和高机动性。\n压力：防御依赖节奏，失去连击时容错较低。",
+		"char.char_warlock.name": "咒术师",
 		"settings.paused": "暂停",
 		"settings.hint": "（按 ESC 继续）",
 		"settings.title": "设置",
@@ -87,8 +88,17 @@ var ui := {
 		"combat.resolving": "卡牌结算中...",
 		"combat.end_turn": "结束回合",
 		"combat.fast": "快速",
+		"combat.ready": "状态：准备就绪",
+		"combat.no_energy": "能量不足",
+		"combat.log.no_energy_for": "能量不足，无法打出 %s。",
+		"combat.log.skipped_reward": "跳过了卡牌奖励。",
 		"combat.log.enemy_rises": "%s 从档案地面升起。",
 		"combat.log.enemies_rise": "%s 从档案地面升起。",
+		"combat.target_tip": "点击切换攻击目标。",
+		"combat.tip.hover": "提示：悬停卡牌可查看完整详情和关键词。",
+		"combat.tip.target": "提示：点击敌人面板可切换目标。",
+		"combat.tip.end_turn": "提示：力量/敏捷会保留；格挡会在每回合重置。",
+		"combat.tip.settings": "提示：按 ESC 打开暂停/设置。",
 		"intent.ward": "防守",
 		"intent.block": "格挡",
 		"intent.attack": "攻击",
@@ -551,15 +561,15 @@ func _translate_card_sentence(sentence: String) -> String:
 
 func _load_language() -> String:
 	if not FileAccess.file_exists(SAVE_PATH):
-		return EN
+		return ZH
 	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
 	if f == null:
-		return EN
+		return ZH
 	var parsed = JSON.parse_string(f.get_as_text())
 	f.close()
 	if typeof(parsed) == TYPE_DICTIONARY:
-		return ZH if String(parsed.get("language", EN)) == ZH else EN
-	return EN
+		return ZH if String(parsed.get("language", ZH)) == ZH else EN
+	return ZH
 
 
 func _save_language() -> void:

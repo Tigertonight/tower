@@ -73,6 +73,7 @@ var _last_played_at: Dictionary = {}
 var _current_music_id: String = ""
 var _current_ambient_id: String = ""
 var _verbose: bool = false
+var _test_silenced: bool = false
 var _rng := RandomNumberGenerator.new()
 
 
@@ -115,6 +116,8 @@ func _ensure_buses() -> void:
 # ─── Public API ────────────────────────────────────────────────────────────────
 
 func play_sfx(sfx_id: String, volume_db: float = 0.0, throttle: float = DEFAULT_THROTTLE_SECONDS) -> void:
+	if _test_silenced:
+		return
 	if sfx_id.is_empty():
 		return
 	var now := Time.get_ticks_msec() / 1000.0
@@ -139,6 +142,8 @@ func play_sfx(sfx_id: String, volume_db: float = 0.0, throttle: float = DEFAULT_
 
 func play_sfx_pitched(sfx_id: String, semitone_jitter: float = 1.0, volume_db: float = 0.0) -> void:
 	# Used for combat_hit etc. so a streak doesn't sound robotic.
+	if _test_silenced:
+		return
 	if sfx_id.is_empty():
 		return
 	var stream := _try_load_stream(SFX_BASE, sfx_id)
@@ -157,6 +162,8 @@ func play_sfx_pitched(sfx_id: String, semitone_jitter: float = 1.0, volume_db: f
 
 
 func play_music(track_id: String, fade_ms: int = 600) -> void:
+	if _test_silenced:
+		return
 	if track_id.is_empty():
 		return
 	if track_id == _current_music_id and _music_player.playing:
@@ -188,6 +195,8 @@ func stop_music(fade_ms: int = 600) -> void:
 
 
 func play_ambient(amb_id: String, fade_ms: int = 1200) -> void:
+	if _test_silenced:
+		return
 	if amb_id.is_empty():
 		stop_ambient(fade_ms)
 		return
@@ -231,6 +240,29 @@ func set_music_volume_db(db: float) -> void:
 
 func set_sfx_volume_db(db: float) -> void:
 	_set_bus_db(BUS_SFX, db)
+
+
+func set_test_silenced(enabled: bool) -> void:
+	_test_silenced = enabled
+	if enabled:
+		_shutdown_playback()
+
+
+func _shutdown_playback() -> void:
+	_current_music_id = ""
+	_current_ambient_id = ""
+	if _music_player != null:
+		_music_player.stop()
+		_music_player.stream = null
+	if _ambient_player != null:
+		_ambient_player.stop()
+		_ambient_player.stream = null
+	for player in _sfx_players:
+		if player == null:
+			continue
+		player.stop()
+		player.stream = null
+	_stream_cache.clear()
 
 
 func _set_bus_db(bus: String, db: float) -> void:

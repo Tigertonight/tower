@@ -3,6 +3,7 @@ extends SceneTree
 const MapGeneratorScript := preload("res://scripts/map/map_generator.gd")
 const EnemyCatalogScript := preload("res://scripts/combat/enemy_catalog.gd")
 const PotionCatalogScript := preload("res://scripts/potions/potion_catalog.gd")
+const ResourcePathUtilScript := preload("res://scripts/core/resource_path_util.gd")
 
 const DATA_DIRS := [
 	"res://data/cards",
@@ -29,15 +30,12 @@ func _init() -> void:
 func _check_all_data_resources() -> bool:
 	var failed := false
 	for dir_path in DATA_DIRS:
-		var dir := DirAccess.open(dir_path)
-		if dir == null:
+		var paths := ResourcePathUtilScript.data_resource_paths(dir_path)
+		if paths.is_empty():
 			push_error("Failed to open data dir: %s" % dir_path)
 			failed = true
 			continue
-		for file_name in dir.get_files():
-			if not file_name.ends_with(".tres"):
-				continue
-			var path := "%s/%s" % [dir_path, file_name]
+		for path in paths:
 			var resource = load(path)
 			if resource == null:
 				push_error("Failed to load resource: %s" % path)
@@ -90,14 +88,7 @@ func _check_content_counts() -> bool:
 
 
 func _count_tres(dir_path: String) -> int:
-	var dir := DirAccess.open(dir_path)
-	if dir == null:
-		return 0
-	var count := 0
-	for file_name in dir.get_files():
-		if file_name.ends_with(".tres"):
-			count += 1
-	return count
+	return ResourcePathUtilScript.data_resource_paths(dir_path).size()
 
 
 func _check_maps() -> bool:

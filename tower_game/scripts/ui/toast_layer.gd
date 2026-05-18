@@ -33,6 +33,7 @@ func push_toast(message: String, color: Color = Color(0.94, 0.86, 0.72)) -> void
 
 	var label := Label.new()
 	label.text = message
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.add_theme_font_size_override("font_size", 14)
 	label.add_theme_color_override("font_color", color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -56,14 +57,16 @@ func push_toast(message: String, color: Color = Color(0.94, 0.86, 0.72)) -> void
 
 func _layout_toasts() -> void:
 	var viewport := get_viewport_rect().size
-	var x := viewport.x - 360
-	var y := viewport.y - 220
+	var x: float = viewport.x - 430.0
+	var y: float = min(viewport.y - 360.0, 360.0)
 	for i in _toasts.size():
 		var bubble := _toasts[i]
 		if not is_instance_valid(bubble):
 			continue
 		bubble.position = Vector2(x, y - i * (TOAST_HEIGHT + TOAST_PADDING))
-		bubble.custom_minimum_size = Vector2(340, TOAST_HEIGHT)
+		bubble.custom_minimum_size = Vector2(400, TOAST_HEIGHT)
+		bubble.size = Vector2(400, TOAST_HEIGHT)
+		bubble.clip_contents = true
 
 
 func _bubble_box() -> StyleBoxFlat:

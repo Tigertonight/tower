@@ -16,5 +16,5 @@ is_playable = true
 theme_color = Color(0.28, 0.72, 0.88, 1)
 starting_hp = 64
 starting_relic_id = "core_lantern"
-starter_deck = ["strike_form", "strike_form", "strike_form", "strike_form", "guard_form", "guard_form", "guard_form", "guard_form", "quick_read", "field_order", "deep_breath", "page_turn"]
+starter_deck = ["core_spark", "core_spark", "core_spark", "core_spark", "lampguard", "lampguard", "lampguard", "lampguard", "glass_ray", "minor_formula", "quick_calculation", "circle_ward"]
 sprite_path = "res://art/generated/sprites/mage.png"

@@ -177,8 +177,12 @@ func _round_box(bg: Color, border: Color, border_width: int, radius: int) -> Sty
 
 func _load_card_art(card_id: String) -> Texture2D:
 	var path := "res://art/generated/cards/%s.png" % card_id
-	if not FileAccess.file_exists(path):
+	if not ResourceLoader.exists(path) and not FileAccess.file_exists(path):
 		path = "res://art/generated/ui/card_back.png"
+	if ResourceLoader.exists(path):
+		var imported = load(path)
+		if imported is Texture2D:
+			return imported
 	var image := Image.new()
 	if image.load(path) != OK:
 		return null

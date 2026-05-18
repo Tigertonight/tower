@@ -16,7 +16,7 @@ const DEFAULTS := {
 	"master_db": 0.0,
 	"music_db": -6.0,
 	"sfx_db": 0.0,
-	"language": "en",
+	"language": "zh",
 	"fast_resolve": false,
 	"show_tutorial_hints": true,
 }
