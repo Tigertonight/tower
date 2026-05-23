@@ -33,3 +33,4 @@ upgraded_effects = Array[Dictionary]([{
 "type": "block",
 "amount": 4
 }])
+vfx_profile = "heavy"

@@ -19,3 +19,4 @@ description = "Deal 7 damage."
 upgraded_description = "Deal 10 damage."
 effects = Array[Dictionary]([{"type": "damage", "amount": 7}])
 upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 10}])
+vfx_profile = "slash"

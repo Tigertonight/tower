@@ -33,3 +33,4 @@ upgraded_effects = Array[Dictionary]([{
 "type": "energy",
 "amount": 1
 }])
+vfx_profile = "energy"

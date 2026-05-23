@@ -19,3 +19,4 @@ description = "Deal 7 damage. Gain 3 Block."
 upgraded_description = "Deal 9 damage. Gain 4 Block."
 effects = Array[Dictionary]([{"type": "damage", "amount": 7}, {"type": "block", "amount": 3}])
 upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 9}, {"type": "block", "amount": 4}])
+vfx_profile = "slash"

@@ -18,6 +18,7 @@ const SaveManagerScript := preload("res://scripts/save/save_manager.gd")
 const CARD_VIEW_SCENE := preload("res://scenes/combat/card_view.tscn")
 const REWARD_SCREEN_SCENE := preload("res://scenes/ui/reward_screen.tscn")
 const ActionQueueScript := preload("res://scripts/combat/action_queue.gd")
+const CardPresentationDirectorScript := preload("res://scripts/combat/card_presentation_director.gd")
 const CardInspectorScript := preload("res://scripts/ui/card_inspector.gd")
 const PileModalScript := preload("res://scripts/ui/pile_modal.gd")
 const DeckModalScript := preload("res://scripts/ui/deck_modal.gd")
@@ -107,6 +108,7 @@ var restart_button: Button
 var deck_summary_button: Button
 var reward_screen
 var action_queue
+var presentation_director
 var card_inspector
 var pile_modal
 var deck_modal
@@ -481,6 +483,12 @@ func _build_overlay_components() -> void:
 	action_queue.fast_resolve = fast_resolve
 	add_child(action_queue)
 
+	presentation_director = CardPresentationDirectorScript.new()
+	presentation_director.name = "CardPresentationDirector"
+	presentation_director.setup(self)
+	presentation_director.set_fast_resolve(fast_resolve)
+	add_child(presentation_director)
+
 	card_inspector = CardInspectorScript.new()
 	card_inspector.name = "CardInspector"
 	card_inspector.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -515,6 +523,8 @@ func set_fast_resolve(enabled: bool) -> void:
 	fast_resolve = enabled
 	if action_queue != null:
 		action_queue.fast_resolve = enabled
+	if presentation_director != null:
+		presentation_director.set_fast_resolve(enabled)
 
 
 func set_tutorial_hints_enabled(enabled: bool) -> void:
@@ -1368,17 +1378,9 @@ func _on_card_pressed(card) -> void:
 
 
 func _play_card_with_queue(card) -> void:
-	# Determine the target & whether we have damage/block early so we can
-	# choose the right animation flavor.
-	var had_damage_effect := false
-	var had_block_effect := false
-	for effect in card.get_effects():
-		var et := String(effect.get("type", ""))
-		if et == "damage" or et == "damage_all_enemies" or et == "damage_per_target_ink":
-			had_damage_effect = true
-		elif et == "block":
-			had_block_effect = true
-	var attack_profile := _attack_vfx_profile_for_card(card)
+	var card_profile := _attack_vfx_profile_for_card(card)
+	if presentation_director != null:
+		card_profile = presentation_director.resolve_profile(card)
 
 	player_energy -= card.get_cost()
 	_set_log("Played %s." % card.get_display_name())
@@ -1398,26 +1400,20 @@ func _play_card_with_queue(card) -> void:
 			sfx_id = "sfx_card_play_power"
 		am.play_sfx(sfx_id)
 
-	# Step 1: brief flight delay (140 ms).
-	action_queue.push_wait(0.14)
-
-	# Step 2: VFX + hit pause (only meaningful on damage cards).
-	if had_damage_effect:
-		action_queue.push(func() -> Tween: return _play_player_attack_commit(attack_profile))
-		action_queue.push(func(): _spawn_attack_travel_effect(attack_profile))
-		action_queue.push_wait(_attack_pre_hit_wait(attack_profile))
-		action_queue.push_hit_pause(_attack_hit_pause(attack_profile))
-	elif had_block_effect:
-		action_queue.push(func(): _spawn_focus_effect())
-		action_queue.push_wait(0.04)
+	# Step 1/2: card presentation. The director keeps card-identity feedback
+	# separate from combat rules, so new profiles can be added without changing
+	# damage or deck logic.
+	if presentation_director != null:
+		card_profile = presentation_director.enqueue_card_presentation(action_queue, card)
 	else:
+		action_queue.push_wait(0.14)
 		action_queue.push(func(): _spawn_focus_effect())
 		action_queue.push_wait(0.06)
 
 	# Step 3: resolve effects (damage / block / draw / status / energy).
 	action_queue.push(func():
 		var target = enemy
-		_active_attack_vfx_profile = attack_profile
+		_active_attack_vfx_profile = card_profile
 		_active_attack_hit_index = 0
 		for effect in card.get_effects():
 			EffectResolverScript.resolve(effect, self, self, target)
@@ -1631,16 +1627,21 @@ func _play_player_attack_commit(profile: String = "slash") -> Tween:
 	t.set_ease(Tween.EASE_OUT)
 	match profile:
 		"heavy":
-			t.tween_property(player_art_rect, "position", origin + Vector2(-10, 4), 0.08)
-			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 0.98, 0.08)
-			t.tween_property(player_art_rect, "position", origin + Vector2(48, -8), 0.10)
-			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.09, 0.10)
-			t.tween_property(player_art_rect, "position", origin, 0.12)
-			t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.12)
+			t.tween_property(player_art_rect, "position", origin + Vector2(-18, 8), 0.11)
+			t.parallel().tween_property(player_art_rect, "scale", Vector2(scale_origin.x * 0.96, scale_origin.y * 1.04), 0.11)
+			t.parallel().tween_property(player_art_rect, "modulate", Color(1.20, 0.86, 0.58, 1.0), 0.11)
+			t.tween_property(player_art_rect, "position", origin + Vector2(72, -12), 0.085)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.14, 0.085)
+			t.parallel().tween_property(player_art_rect, "modulate", Color.WHITE, 0.085)
+			t.tween_property(player_art_rect, "position", origin + Vector2(-4, 2), 0.13)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.13)
+			t.tween_property(player_art_rect, "position", origin, 0.055)
 		"stab":
-			t.tween_property(player_art_rect, "position", origin + Vector2(48, -2), 0.055)
-			t.parallel().tween_property(player_art_rect, "scale", Vector2(scale_origin.x * 1.08, scale_origin.y * 0.98), 0.055)
-			t.tween_property(player_art_rect, "position", origin, 0.09)
+			t.tween_property(player_art_rect, "position", origin + Vector2(-8, 0), 0.035)
+			t.parallel().tween_property(player_art_rect, "scale", Vector2(scale_origin.x * 0.98, scale_origin.y * 1.02), 0.035)
+			t.tween_property(player_art_rect, "position", origin + Vector2(66, -2), 0.055)
+			t.parallel().tween_property(player_art_rect, "scale", Vector2(scale_origin.x * 1.14, scale_origin.y * 0.94), 0.055)
+			t.tween_property(player_art_rect, "position", origin, 0.095)
 			t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.09)
 		"multi":
 			t.tween_property(player_art_rect, "position", origin + Vector2(28, -5), 0.045)
@@ -1654,9 +1655,11 @@ func _play_player_attack_commit(profile: String = "slash") -> Tween:
 			t.tween_property(player_art_rect, "scale", scale_origin, 0.13)
 			t.parallel().tween_property(player_art_rect, "modulate", Color.WHITE, 0.13)
 		_:
-			t.tween_property(player_art_rect, "position", origin + Vector2(34, -4), 0.07)
-			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.05, 0.07)
-			t.tween_property(player_art_rect, "position", origin, 0.10)
+			t.tween_property(player_art_rect, "position", origin + Vector2(-8, 3), 0.045)
+			t.parallel().tween_property(player_art_rect, "scale", Vector2(scale_origin.x * 0.99, scale_origin.y * 1.02), 0.045)
+			t.tween_property(player_art_rect, "position", origin + Vector2(46, -5), 0.07)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.07, 0.07)
+			t.tween_property(player_art_rect, "position", origin, 0.11)
 			t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.10)
 	return t
 
@@ -1914,6 +1917,7 @@ func deal_damage(target, amount: int) -> void:
 		_spawn_profile_hit_effect(profile, hit_anchor - Vector2(48, 48), _active_attack_hit_index)
 		_spawn_float_text("-%d" % damage, hit_anchor, _damage_text_color(profile))
 		_flash_enemy(target)
+		_knock_enemy_on_hit(target, profile)
 		var am = _audio()
 		if am != null:
 			am.play_sfx_pitched("sfx_combat_hit", _impact_pitch(profile), _impact_volume_db(profile))
@@ -2770,13 +2774,15 @@ func _spawn_slash_effect() -> void:
 	slash.ignore_texture_size = true
 	slash.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	slash.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	slash.custom_minimum_size = Vector2(170, 90)
-	slash.position = Vector2(820, 250)
-	slash.rotation = -0.35
+	slash.custom_minimum_size = Vector2(210, 108)
+	slash.position = Vector2(790, 252)
+	slash.rotation = -0.42
+	slash.modulate = Color(1.18, 0.88, 0.58, 0.95)
 	effect_layer.add_child(slash)
 	var tween := create_tween()
-	tween.tween_property(slash, "position", Vector2(940, 210), 0.18)
-	tween.parallel().tween_property(slash, "modulate:a", 0.0, 0.22)
+	tween.tween_property(slash, "position", Vector2(952, 202), 0.16)
+	tween.parallel().tween_property(slash, "scale", Vector2(1.16, 1.04), 0.16)
+	tween.parallel().tween_property(slash, "modulate:a", 0.0, 0.21)
 	tween.tween_callback(slash.queue_free)
 
 
@@ -2794,6 +2800,24 @@ func _spawn_attack_travel_effect(profile: String) -> void:
 			_spawn_slash_effect()
 
 
+func _spawn_card_presentation_effect(profile: String) -> void:
+	match profile:
+		"guard":
+			_spawn_guard_presentation_effect()
+		"draw":
+			_spawn_draw_presentation_effect()
+		"energy":
+			_spawn_energy_presentation_effect()
+		"power":
+			_spawn_power_presentation_effect()
+		"debuff":
+			_spawn_debuff_presentation_effect()
+		"curse":
+			_spawn_curse_presentation_effect()
+		_:
+			_spawn_focus_effect()
+
+
 func _spawn_stab_effect() -> void:
 	if effect_layer == null:
 		return
@@ -2802,14 +2826,14 @@ func _spawn_stab_effect() -> void:
 	line.ignore_texture_size = true
 	line.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	line.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	line.custom_minimum_size = Vector2(210, 44)
-	line.position = Vector2(742, 242)
+	line.custom_minimum_size = Vector2(260, 48)
+	line.position = Vector2(710, 240)
 	line.rotation = -0.08
 	line.modulate = Color(0.86, 1.0, 1.35, 0.92)
 	effect_layer.add_child(line)
 	var tween := create_tween()
-	tween.tween_property(line, "position", Vector2(930, 232), 0.115)
-	tween.parallel().tween_property(line, "scale", Vector2(1.35, 0.55), 0.115)
+	tween.tween_property(line, "position", Vector2(956, 230), 0.105)
+	tween.parallel().tween_property(line, "scale", Vector2(1.55, 0.50), 0.105)
 	tween.parallel().tween_property(line, "modulate:a", 0.0, 0.16)
 	tween.tween_callback(line.queue_free)
 
@@ -2822,17 +2846,39 @@ func _spawn_heavy_attack_effect() -> void:
 	slam.ignore_texture_size = true
 	slam.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	slam.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	slam.custom_minimum_size = Vector2(220, 170)
-	slam.position = Vector2(760, 170)
-	slam.rotation = -0.18
+	slam.custom_minimum_size = Vector2(310, 220)
+	slam.position = Vector2(704, 136)
+	slam.rotation = -0.24
 	slam.modulate = Color(1.25, 0.92, 0.58, 0.0)
 	effect_layer.add_child(slam)
 	var tween := create_tween()
-	tween.tween_property(slam, "modulate:a", 0.92, 0.045)
-	tween.parallel().tween_property(slam, "scale", Vector2(1.16, 1.16), 0.13)
-	tween.parallel().tween_property(slam, "position", Vector2(840, 198), 0.13)
-	tween.tween_property(slam, "modulate:a", 0.0, 0.20)
+	tween.tween_property(slam, "modulate:a", 0.98, 0.035)
+	tween.parallel().tween_property(slam, "scale", Vector2(1.24, 1.24), 0.115)
+	tween.parallel().tween_property(slam, "position", Vector2(810, 182), 0.115)
+	tween.tween_property(slam, "modulate:a", 0.0, 0.24)
 	tween.tween_callback(slam.queue_free)
+	_spawn_heavy_impact_ring()
+
+
+func _spawn_heavy_impact_ring() -> void:
+	if effect_layer == null:
+		return
+	var ring := TextureRect.new()
+	ring.texture = _load_png_texture("res://art/generated/sprites/vfx_hit_spark.png")
+	ring.ignore_texture_size = true
+	ring.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ring.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ring.custom_minimum_size = Vector2(150, 150)
+	ring.position = Vector2(868, 208)
+	ring.modulate = Color(1.35, 0.68, 0.30, 0.0)
+	effect_layer.add_child(ring)
+	var tween := create_tween()
+	tween.tween_interval(0.08)
+	tween.tween_property(ring, "modulate:a", 0.92, 0.03)
+	tween.parallel().tween_property(ring, "scale", Vector2(2.25, 1.45), 0.16)
+	tween.parallel().tween_property(ring, "rotation", 0.32, 0.16)
+	tween.tween_property(ring, "modulate:a", 0.0, 0.12)
+	tween.tween_callback(ring.queue_free)
 
 
 func _spawn_multi_attack_effect() -> void:
@@ -2876,6 +2922,126 @@ func _spawn_arcane_attack_effect() -> void:
 	tween.parallel().tween_property(pulse, "scale", Vector2(1.18, 1.0), 0.24)
 	tween.tween_property(pulse, "modulate:a", 0.0, 0.16)
 	tween.tween_callback(pulse.queue_free)
+
+
+func _spawn_guard_presentation_effect() -> void:
+	if effect_layer == null:
+		return
+	var shield := TextureRect.new()
+	shield.texture = _load_png_texture("res://art/generated/sprites/vfx_block_pulse.png")
+	shield.ignore_texture_size = true
+	shield.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shield.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	shield.custom_minimum_size = Vector2(150, 150)
+	shield.position = Vector2(170, 178)
+	shield.modulate = Color(0.55, 0.82, 1.25, 0.0)
+	effect_layer.add_child(shield)
+	var tween := create_tween()
+	tween.tween_property(shield, "modulate:a", 0.92, 0.06)
+	tween.parallel().tween_property(shield, "scale", Vector2(1.15, 1.15), 0.16)
+	tween.tween_property(shield, "modulate:a", 0.0, 0.18)
+	tween.tween_callback(shield.queue_free)
+
+
+func _spawn_draw_presentation_effect() -> void:
+	if effect_layer == null:
+		return
+	for i in 3:
+		var page := TextureRect.new()
+		page.texture = _load_png_texture("res://art/generated/sprites/vfx_draw_trail.png")
+		page.ignore_texture_size = true
+		page.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		page.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		page.custom_minimum_size = Vector2(100, 72)
+		page.position = Vector2(380 - i * 22, 520 + i * 4)
+		page.rotation = -0.18 + float(i) * 0.12
+		page.modulate = Color(1.0, 0.90, 0.58, 0.0)
+		effect_layer.add_child(page)
+		var tween := create_tween()
+		tween.tween_interval(0.025 * float(i))
+		tween.tween_property(page, "modulate:a", 0.84, 0.035)
+		tween.parallel().tween_property(page, "position", Vector2(560 + i * 18, 570 - i * 8), 0.18)
+		tween.parallel().tween_property(page, "scale", Vector2(0.72, 0.72), 0.18)
+		tween.tween_property(page, "modulate:a", 0.0, 0.10)
+		tween.tween_callback(page.queue_free)
+
+
+func _spawn_energy_presentation_effect() -> void:
+	if effect_layer == null:
+		return
+	var pulse := TextureRect.new()
+	pulse.texture = _load_png_texture("res://art/generated/sprites/vfx_energy_gain.png")
+	pulse.ignore_texture_size = true
+	pulse.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pulse.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pulse.custom_minimum_size = Vector2(128, 128)
+	pulse.position = Vector2(112, 498)
+	pulse.modulate = Color(0.55, 0.92, 1.35, 0.0)
+	effect_layer.add_child(pulse)
+	var tween := create_tween()
+	tween.tween_property(pulse, "modulate:a", 0.95, 0.06)
+	tween.parallel().tween_property(pulse, "scale", Vector2(1.28, 1.28), 0.16)
+	tween.tween_property(pulse, "modulate:a", 0.0, 0.20)
+	tween.tween_callback(pulse.queue_free)
+
+
+func _spawn_power_presentation_effect() -> void:
+	if effect_layer == null:
+		return
+	var aura := TextureRect.new()
+	aura.texture = _load_png_texture("res://art/generated/sprites/vfx_status_apply_buff.png")
+	aura.ignore_texture_size = true
+	aura.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	aura.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	aura.custom_minimum_size = Vector2(150, 150)
+	aura.position = Vector2(178, 168)
+	aura.modulate = Color(1.0, 0.82, 0.36, 0.0)
+	effect_layer.add_child(aura)
+	var tween := create_tween()
+	tween.tween_property(aura, "modulate:a", 0.88, 0.08)
+	tween.parallel().tween_property(aura, "scale", Vector2(1.22, 1.22), 0.20)
+	tween.parallel().tween_property(aura, "rotation", 0.18, 0.20)
+	tween.tween_property(aura, "modulate:a", 0.0, 0.18)
+	tween.tween_callback(aura.queue_free)
+
+
+func _spawn_debuff_presentation_effect() -> void:
+	if effect_layer == null:
+		return
+	var mark := TextureRect.new()
+	mark.texture = _load_png_texture("res://art/generated/sprites/vfx_status_apply_debuff.png")
+	mark.ignore_texture_size = true
+	mark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	mark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	mark.custom_minimum_size = Vector2(136, 136)
+	mark.position = Vector2(830, 166)
+	mark.modulate = Color(0.86, 0.58, 1.00, 0.0)
+	effect_layer.add_child(mark)
+	var tween := create_tween()
+	tween.tween_property(mark, "modulate:a", 0.90, 0.06)
+	tween.parallel().tween_property(mark, "scale", Vector2(1.18, 1.18), 0.18)
+	tween.parallel().tween_property(mark, "position", mark.position + Vector2(12, -8), 0.18)
+	tween.tween_property(mark, "modulate:a", 0.0, 0.18)
+	tween.tween_callback(mark.queue_free)
+
+
+func _spawn_curse_presentation_effect() -> void:
+	if effect_layer == null:
+		return
+	var blot := TextureRect.new()
+	blot.texture = _load_png_texture("res://art/generated/sprites/vfx_status_apply_debuff.png")
+	blot.ignore_texture_size = true
+	blot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	blot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	blot.custom_minimum_size = Vector2(180, 180)
+	blot.position = Vector2(508, 246)
+	blot.modulate = Color(0.38, 0.20, 0.55, 0.0)
+	effect_layer.add_child(blot)
+	var tween := create_tween()
+	tween.tween_property(blot, "modulate:a", 0.72, 0.08)
+	tween.parallel().tween_property(blot, "scale", Vector2(1.25, 0.92), 0.18)
+	tween.tween_property(blot, "modulate:a", 0.0, 0.22)
+	tween.tween_callback(blot.queue_free)
 
 
 func _spawn_focus_effect() -> void:
@@ -2970,14 +3136,14 @@ func _spawn_hit_effect(effect_position: Vector2 = Vector2(850, 226)) -> void:
 func _spawn_profile_hit_effect(profile: String, effect_position: Vector2, hit_index: int = 0) -> void:
 	match profile:
 		"stab":
-			_spawn_tinted_hit_effect(effect_position + Vector2(10, -2), Color(0.72, 1.0, 1.45, 1.0), Vector2(0.82, 1.18), 0.12)
+			_spawn_tinted_hit_effect(effect_position + Vector2(10, -2), Color(0.80, 0.96, 1.30, 1.0), Vector2(1.05, 1.36), 0.12)
 		"heavy":
-			_spawn_tinted_hit_effect(effect_position + Vector2(-28, -22), Color(1.35, 0.86, 0.45, 1.0), Vector2(1.75, 1.75), 0.24)
+			_spawn_tinted_hit_effect(effect_position + Vector2(-42, -34), Color(1.45, 0.76, 0.30, 1.0), Vector2(2.35, 2.05), 0.28, "res://art/generated/sprites/vfx_player_hit_impact.png")
 		"multi":
 			var offset := Vector2((hit_index % 3 - 1) * 18, -12 + (hit_index % 2) * 24)
 			_spawn_tinted_hit_effect(effect_position + offset, Color(1.15, 0.92, 1.28, 1.0), Vector2(0.72, 0.72), 0.10)
 		"arcane":
-			_spawn_tinted_hit_effect(effect_position + Vector2(-12, -12), Color(0.35, 1.05, 1.35, 1.0), Vector2(1.32, 1.32), 0.20, "res://art/generated/sprites/vfx_reward_glow.png")
+			_spawn_tinted_hit_effect(effect_position + Vector2(-12, -12), Color(0.58, 0.84, 1.25, 1.0), Vector2(1.32, 1.32), 0.20, "res://art/generated/sprites/vfx_reward_glow.png")
 		_:
 			_spawn_hit_effect(effect_position)
 
@@ -3011,11 +3177,11 @@ func _damage_text_color(profile: String) -> Color:
 		"stab":
 			return Color(0.70, 0.95, 1.0)
 		"heavy":
-			return Color(1.0, 0.58, 0.22)
+			return Color(1.0, 0.46, 0.16)
 		"multi":
 			return Color(1.0, 0.72, 0.95)
 		"arcane":
-			return Color(0.52, 0.98, 1.0)
+			return Color(0.62, 0.84, 1.0)
 		_:
 			return Color(1.0, 0.36, 0.22)
 
@@ -3025,7 +3191,7 @@ func _impact_pitch(profile: String) -> float:
 		"stab":
 			return 1.25
 		"heavy":
-			return 0.78
+			return 0.64
 		"multi":
 			return 1.18 + float(_active_attack_hit_index % 3) * 0.06
 		"arcane":
@@ -3037,7 +3203,9 @@ func _impact_pitch(profile: String) -> float:
 func _impact_volume_db(profile: String) -> float:
 	match profile:
 		"heavy":
-			return 3.0
+			return 5.0
+		"slash":
+			return 1.5
 		"multi":
 			return -3.0
 		"arcane":
@@ -3049,29 +3217,65 @@ func _impact_volume_db(profile: String) -> float:
 func _impact_shake_strength(profile: String, damage: int) -> float:
 	match profile:
 		"heavy":
-			return 9.5 if damage >= 10 else 7.0
+			return 13.0 if damage >= 10 else 9.0
 		"multi":
 			return 2.0
 		"stab":
-			return 3.5
+			return 4.8
 		"arcane":
 			return 5.5 if damage >= 10 else 3.8
 		_:
-			return 8.0 if damage >= 12 else 3.0
+			return 9.0 if damage >= 12 else 4.8
 
 
 func _impact_shake_duration(profile: String, damage: int) -> float:
 	match profile:
 		"heavy":
-			return 0.24
+			return 0.30
 		"multi":
 			return 0.065
 		"stab":
-			return 0.09
+			return 0.11
 		"arcane":
 			return 0.16
 		_:
-			return 0.20 if damage >= 12 else 0.10
+			return 0.22 if damage >= 12 else 0.13
+
+
+func _knock_enemy_on_hit(target_enemy, profile: String) -> void:
+	var art_rect := _art_rect_for_enemy(target_enemy)
+	if art_rect == null or fast_resolve:
+		return
+	var origin := art_rect.position
+	var scale_origin := art_rect.scale
+	var offset := Vector2(16, 0)
+	var squash := Vector2(1.05, 0.98)
+	var out_time := 0.035
+	var back_time := 0.085
+	match profile:
+		"heavy":
+			offset = Vector2(36, -5)
+			squash = Vector2(1.12, 0.92)
+			out_time = 0.045
+			back_time = 0.15
+		"stab":
+			offset = Vector2(22, -1)
+			squash = Vector2(1.08, 0.96)
+			out_time = 0.028
+			back_time = 0.075
+		"multi":
+			offset = Vector2(9 + (_active_attack_hit_index % 2) * 5, randf_range(-3.0, 3.0))
+			squash = Vector2(1.03, 0.99)
+			out_time = 0.025
+			back_time = 0.055
+		"arcane":
+			offset = Vector2(14, -8)
+			squash = Vector2(1.05, 1.05)
+	var tween := create_tween()
+	tween.tween_property(art_rect, "position", origin + offset, out_time)
+	tween.parallel().tween_property(art_rect, "scale", Vector2(scale_origin.x * squash.x, scale_origin.y * squash.y), out_time)
+	tween.tween_property(art_rect, "position", origin, back_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(art_rect, "scale", scale_origin, back_time)
 
 
 func _spawn_energy_gain_effect() -> void:

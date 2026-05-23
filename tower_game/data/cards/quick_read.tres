@@ -27,3 +27,4 @@ upgraded_effects = Array[Dictionary]([{
 "type": "draw",
 "amount": 3
 }])
+vfx_profile = "draw"

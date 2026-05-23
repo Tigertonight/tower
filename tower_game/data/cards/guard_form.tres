@@ -27,3 +27,4 @@ upgraded_effects = Array[Dictionary]([{
 "type": "block",
 "amount": 8
 }])
+vfx_profile = "guard"
