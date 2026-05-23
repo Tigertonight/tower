@@ -27,3 +27,4 @@ upgraded_effects = Array[Dictionary]([{
 "type": "damage",
 "amount": 9
 }])
+vfx_profile = "slash"

@@ -35,3 +35,4 @@ upgraded_effects = Array[Dictionary]([{
 "status": "ink",
 "amount": 3
 }])
+vfx_profile = "arcane"

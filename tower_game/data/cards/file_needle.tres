@@ -19,3 +19,4 @@ description = "Deal 5 damage. Draw 1."
 upgraded_description = "Deal 7 damage. Draw 1."
 effects = Array[Dictionary]([{"type": "damage", "amount": 5}, {"type": "draw", "amount": 1}])
 upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 7}, {"type": "draw", "amount": 1}])
+vfx_profile = "stab"

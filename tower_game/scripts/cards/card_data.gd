@@ -29,6 +29,7 @@ extends Resource
 @export var upgraded_description: String = ""
 @export var effects: Array[Dictionary] = []
 @export var upgraded_effects: Array[Dictionary] = []
+@export var vfx_profile: String = ""  # "", "slash", "stab", "heavy", "multi", "arcane"
 @export var exhaust_on_play: bool = false
 @export var ethereal: bool = false
 @export var unplayable: bool = false

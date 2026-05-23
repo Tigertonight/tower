@@ -35,3 +35,4 @@ upgraded_effects = Array[Dictionary]([{
 "status": "vulnerable",
 "amount": 3
 }])
+vfx_profile = "heavy"

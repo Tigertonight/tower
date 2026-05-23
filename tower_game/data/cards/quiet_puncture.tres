@@ -19,3 +19,4 @@ description = "Deal 4 damage. Apply 2 Ink."
 upgraded_description = "Deal 6 damage. Apply 3 Ink."
 effects = Array[Dictionary]([{"type": "damage", "amount": 4}, {"type": "status", "status": "ink", "amount": 2}])
 upgraded_effects = Array[Dictionary]([{"type": "damage", "amount": 6}, {"type": "status", "status": "ink", "amount": 3}])
+vfx_profile = "stab"

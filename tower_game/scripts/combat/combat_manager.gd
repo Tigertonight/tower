@@ -116,6 +116,8 @@ var fast_resolve: bool = false
 # series of toast-driven tutorial hints over the opening turn.
 var tutorial_hints_enabled: bool = true
 var _animating: bool = false
+var _active_attack_vfx_profile: String = "slash"
+var _active_attack_hit_index: int = 0
 
 
 func _audio():
@@ -1376,6 +1378,7 @@ func _play_card_with_queue(card) -> void:
 			had_damage_effect = true
 		elif et == "block":
 			had_block_effect = true
+	var attack_profile := _attack_vfx_profile_for_card(card)
 
 	player_energy -= card.get_cost()
 	_set_log("Played %s." % card.get_display_name())
@@ -1400,10 +1403,10 @@ func _play_card_with_queue(card) -> void:
 
 	# Step 2: VFX + hit pause (only meaningful on damage cards).
 	if had_damage_effect:
-		action_queue.push(func() -> Tween: return _play_player_attack_commit())
-		action_queue.push(func(): _spawn_slash_effect())
-		action_queue.push_wait(0.08)
-		action_queue.push_hit_pause(0.06)
+		action_queue.push(func() -> Tween: return _play_player_attack_commit(attack_profile))
+		action_queue.push(func(): _spawn_attack_travel_effect(attack_profile))
+		action_queue.push_wait(_attack_pre_hit_wait(attack_profile))
+		action_queue.push_hit_pause(_attack_hit_pause(attack_profile))
 	elif had_block_effect:
 		action_queue.push(func(): _spawn_focus_effect())
 		action_queue.push_wait(0.04)
@@ -1414,8 +1417,12 @@ func _play_card_with_queue(card) -> void:
 	# Step 3: resolve effects (damage / block / draw / status / energy).
 	action_queue.push(func():
 		var target = enemy
+		_active_attack_vfx_profile = attack_profile
+		_active_attack_hit_index = 0
 		for effect in card.get_effects():
 			EffectResolverScript.resolve(effect, self, self, target)
+		_active_attack_vfx_profile = "slash"
+		_active_attack_hit_index = 0
 		# Fire card_played relics; pass card_type so type-filtered relics
 		# (e.g. attack-only) can opt-in via trigger_params.
 		if relic_manager != null and card != null and card.data != null:
@@ -1447,15 +1454,20 @@ func _resolve_card_immediate(card) -> void:
 	_spawn_card_play_effect(card)
 	var target = enemy
 	var had_damage_effect := false
+	var attack_profile := _attack_vfx_profile_for_card(card)
+	_active_attack_vfx_profile = attack_profile
+	_active_attack_hit_index = 0
 	for effect in card.get_effects():
 		var et := String(effect.get("type", ""))
 		if et == "damage" or et == "damage_all_enemies" or et == "damage_per_target_ink":
 			had_damage_effect = true
 		EffectResolverScript.resolve(effect, self, self, target)
+	_active_attack_vfx_profile = "slash"
+	_active_attack_hit_index = 0
 	_move_played_card_to_final_pile(card)
 	_set_log("Played %s." % card.get_display_name())
 	if had_damage_effect:
-		_spawn_slash_effect()
+		_spawn_attack_travel_effect(attack_profile)
 	else:
 		_spawn_focus_effect()
 	_tick_statuses_after_card()
@@ -1534,7 +1546,82 @@ func _flash_player() -> void:
 	shake.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.055)
 
 
-func _play_player_attack_commit() -> Tween:
+func _attack_vfx_profile_for_card(card) -> String:
+	if card == null or card.data == null:
+		return "slash"
+	var explicit := String(card.data.vfx_profile).strip_edges()
+	if explicit != "":
+		return explicit
+	var data = card.data
+	var effects: Array = card.get_effects()
+	var damage_count := 0
+	var total_damage := 0
+	var has_aoe := false
+	var has_ink_or_status := false
+	for effect in effects:
+		var et := String(effect.get("type", ""))
+		if et == "damage" or et == "damage_per_target_ink":
+			damage_count += 1
+			total_damage += int(effect.get("amount", 0))
+		elif et == "damage_all_enemies":
+			has_aoe = true
+			damage_count += 1
+			total_damage += int(effect.get("amount", 0))
+		elif et == "status":
+			var status := String(effect.get("status", ""))
+			if status in ["ink", "poison", "weak", "vulnerable"]:
+				has_ink_or_status = true
+	for tag in data.archetype_tags:
+		var tag_text := String(tag)
+		if tag_text in ["multi_hit", "knife", "flurry"]:
+			return "multi"
+		if tag_text.find("ink") >= 0 or tag_text.find("red_string") >= 0 or tag_text.find("arcane") >= 0:
+			return "arcane"
+	for tag2 in data.keyword_tags:
+		var keyword := String(tag2)
+		if keyword in ["ink", "poison"]:
+			return "arcane"
+	if damage_count >= 3:
+		return "multi"
+	if has_aoe or has_ink_or_status or String(data.pool_id) in ["archivist", "mage", "warlock"]:
+		return "arcane"
+	if total_damage >= 12 or card.get_cost() >= 2:
+		return "heavy"
+	var id_text := String(data.id)
+	if id_text.find("needle") >= 0 or id_text.find("thrust") >= 0 or id_text.find("puncture") >= 0 or id_text.find("pin") >= 0:
+		return "stab"
+	return "slash"
+
+
+func _attack_pre_hit_wait(profile: String) -> float:
+	match profile:
+		"heavy":
+			return 0.12
+		"multi":
+			return 0.055
+		"stab":
+			return 0.045
+		"arcane":
+			return 0.10
+		_:
+			return 0.08
+
+
+func _attack_hit_pause(profile: String) -> float:
+	match profile:
+		"heavy":
+			return 0.085
+		"multi":
+			return 0.035
+		"stab":
+			return 0.045
+		"arcane":
+			return 0.065
+		_:
+			return 0.06
+
+
+func _play_player_attack_commit(profile: String = "slash") -> Tween:
 	if player_art_rect == null or fast_resolve:
 		return null
 	var origin := player_art_rect.position
@@ -1542,10 +1629,35 @@ func _play_player_attack_commit() -> Tween:
 	var t := create_tween()
 	t.set_trans(Tween.TRANS_QUAD)
 	t.set_ease(Tween.EASE_OUT)
-	t.tween_property(player_art_rect, "position", origin + Vector2(34, -4), 0.07)
-	t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.05, 0.07)
-	t.tween_property(player_art_rect, "position", origin, 0.10)
-	t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.10)
+	match profile:
+		"heavy":
+			t.tween_property(player_art_rect, "position", origin + Vector2(-10, 4), 0.08)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 0.98, 0.08)
+			t.tween_property(player_art_rect, "position", origin + Vector2(48, -8), 0.10)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.09, 0.10)
+			t.tween_property(player_art_rect, "position", origin, 0.12)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.12)
+		"stab":
+			t.tween_property(player_art_rect, "position", origin + Vector2(48, -2), 0.055)
+			t.parallel().tween_property(player_art_rect, "scale", Vector2(scale_origin.x * 1.08, scale_origin.y * 0.98), 0.055)
+			t.tween_property(player_art_rect, "position", origin, 0.09)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.09)
+		"multi":
+			t.tween_property(player_art_rect, "position", origin + Vector2(28, -5), 0.045)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.04, 0.045)
+			t.tween_property(player_art_rect, "position", origin + Vector2(40, 4), 0.045)
+			t.tween_property(player_art_rect, "position", origin, 0.085)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.085)
+		"arcane":
+			t.tween_property(player_art_rect, "scale", scale_origin * 1.04, 0.09)
+			t.parallel().tween_property(player_art_rect, "modulate", Color(0.74, 0.96, 1.35, 1.0), 0.09)
+			t.tween_property(player_art_rect, "scale", scale_origin, 0.13)
+			t.parallel().tween_property(player_art_rect, "modulate", Color.WHITE, 0.13)
+		_:
+			t.tween_property(player_art_rect, "position", origin + Vector2(34, -4), 0.07)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin * 1.05, 0.07)
+			t.tween_property(player_art_rect, "position", origin, 0.10)
+			t.parallel().tween_property(player_art_rect, "scale", scale_origin, 0.10)
 	return t
 
 
@@ -1798,17 +1910,15 @@ func deal_damage(target, amount: int) -> void:
 	if damage > 0:
 		var target_art := _art_rect_for_enemy(target)
 		var hit_anchor := _float_anchor_for(target_art, Vector2(900, 250))
-		_spawn_hit_effect(hit_anchor - Vector2(48, 48))
-		_spawn_float_text("-%d" % damage, hit_anchor, Color(1.0, 0.36, 0.22))
+		var profile := _active_attack_vfx_profile
+		_spawn_profile_hit_effect(profile, hit_anchor - Vector2(48, 48), _active_attack_hit_index)
+		_spawn_float_text("-%d" % damage, hit_anchor, _damage_text_color(profile))
 		_flash_enemy(target)
 		var am = _audio()
 		if am != null:
-			am.play_sfx_pitched("sfx_combat_hit", 1.0)
-		if damage >= 12:
-			# Big hits get a heavier shake to sell the impact.
-			_screen_shake(8.0, 0.20)
-		else:
-			_screen_shake(3.0, 0.10)
+			am.play_sfx_pitched("sfx_combat_hit", _impact_pitch(profile), _impact_volume_db(profile))
+		_screen_shake(_impact_shake_strength(profile, damage), _impact_shake_duration(profile, damage))
+		_active_attack_hit_index += 1
 
 
 func gain_player_block(amount: int) -> void:
@@ -2653,6 +2763,8 @@ func _alpha_bounds(image: Image) -> Rect2i:
 
 
 func _spawn_slash_effect() -> void:
+	if effect_layer == null:
+		return
 	var slash := TextureRect.new()
 	slash.texture = _load_png_texture("res://art/generated/sprites/vfx_slash_arc.png")
 	slash.ignore_texture_size = true
@@ -2666,6 +2778,104 @@ func _spawn_slash_effect() -> void:
 	tween.tween_property(slash, "position", Vector2(940, 210), 0.18)
 	tween.parallel().tween_property(slash, "modulate:a", 0.0, 0.22)
 	tween.tween_callback(slash.queue_free)
+
+
+func _spawn_attack_travel_effect(profile: String) -> void:
+	match profile:
+		"stab":
+			_spawn_stab_effect()
+		"heavy":
+			_spawn_heavy_attack_effect()
+		"multi":
+			_spawn_multi_attack_effect()
+		"arcane":
+			_spawn_arcane_attack_effect()
+		_:
+			_spawn_slash_effect()
+
+
+func _spawn_stab_effect() -> void:
+	if effect_layer == null:
+		return
+	var line := TextureRect.new()
+	line.texture = _load_png_texture("res://art/generated/sprites/vfx_slash_arc.png")
+	line.ignore_texture_size = true
+	line.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	line.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	line.custom_minimum_size = Vector2(210, 44)
+	line.position = Vector2(742, 242)
+	line.rotation = -0.08
+	line.modulate = Color(0.86, 1.0, 1.35, 0.92)
+	effect_layer.add_child(line)
+	var tween := create_tween()
+	tween.tween_property(line, "position", Vector2(930, 232), 0.115)
+	tween.parallel().tween_property(line, "scale", Vector2(1.35, 0.55), 0.115)
+	tween.parallel().tween_property(line, "modulate:a", 0.0, 0.16)
+	tween.tween_callback(line.queue_free)
+
+
+func _spawn_heavy_attack_effect() -> void:
+	if effect_layer == null:
+		return
+	var slam := TextureRect.new()
+	slam.texture = _load_png_texture("res://art/generated/sprites/vfx_player_hit_impact.png")
+	slam.ignore_texture_size = true
+	slam.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	slam.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	slam.custom_minimum_size = Vector2(220, 170)
+	slam.position = Vector2(760, 170)
+	slam.rotation = -0.18
+	slam.modulate = Color(1.25, 0.92, 0.58, 0.0)
+	effect_layer.add_child(slam)
+	var tween := create_tween()
+	tween.tween_property(slam, "modulate:a", 0.92, 0.045)
+	tween.parallel().tween_property(slam, "scale", Vector2(1.16, 1.16), 0.13)
+	tween.parallel().tween_property(slam, "position", Vector2(840, 198), 0.13)
+	tween.tween_property(slam, "modulate:a", 0.0, 0.20)
+	tween.tween_callback(slam.queue_free)
+
+
+func _spawn_multi_attack_effect() -> void:
+	if effect_layer == null:
+		return
+	for i in 4:
+		var slash := TextureRect.new()
+		slash.texture = _load_png_texture("res://art/generated/sprites/vfx_slash_arc.png")
+		slash.ignore_texture_size = true
+		slash.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		slash.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		slash.custom_minimum_size = Vector2(118, 58)
+		slash.position = Vector2(790 + i * 26, 210 + ((i % 2) * 34))
+		slash.rotation = -0.55 + i * 0.28
+		slash.modulate = Color(1.0, 0.96, 1.18, 0.0)
+		effect_layer.add_child(slash)
+		var tween := create_tween()
+		tween.tween_interval(0.035 * float(i))
+		tween.tween_property(slash, "modulate:a", 0.92, 0.025)
+		tween.parallel().tween_property(slash, "position", slash.position + Vector2(88, -18 + i * 5), 0.105)
+		tween.parallel().tween_property(slash, "scale", Vector2(0.84, 0.84), 0.105)
+		tween.tween_property(slash, "modulate:a", 0.0, 0.075)
+		tween.tween_callback(slash.queue_free)
+
+
+func _spawn_arcane_attack_effect() -> void:
+	if effect_layer == null:
+		return
+	var pulse := TextureRect.new()
+	pulse.texture = _load_png_texture("res://art/generated/sprites/vfx_phase_shift_burst.png")
+	pulse.ignore_texture_size = true
+	pulse.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pulse.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pulse.custom_minimum_size = Vector2(260, 130)
+	pulse.position = Vector2(690, 194)
+	pulse.modulate = Color(0.45, 0.92, 1.35, 0.0)
+	effect_layer.add_child(pulse)
+	var tween := create_tween()
+	tween.tween_property(pulse, "modulate:a", 0.76, 0.06)
+	tween.parallel().tween_property(pulse, "position", Vector2(850, 174), 0.24)
+	tween.parallel().tween_property(pulse, "scale", Vector2(1.18, 1.0), 0.24)
+	tween.tween_property(pulse, "modulate:a", 0.0, 0.16)
+	tween.tween_callback(pulse.queue_free)
 
 
 func _spawn_focus_effect() -> void:
@@ -2755,6 +2965,113 @@ func _spawn_hit_effect(effect_position: Vector2 = Vector2(850, 226)) -> void:
 	tween.tween_property(spark, "scale", Vector2(1.25, 1.25), 0.16)
 	tween.parallel().tween_property(spark, "modulate:a", 0.0, 0.24)
 	tween.tween_callback(spark.queue_free)
+
+
+func _spawn_profile_hit_effect(profile: String, effect_position: Vector2, hit_index: int = 0) -> void:
+	match profile:
+		"stab":
+			_spawn_tinted_hit_effect(effect_position + Vector2(10, -2), Color(0.72, 1.0, 1.45, 1.0), Vector2(0.82, 1.18), 0.12)
+		"heavy":
+			_spawn_tinted_hit_effect(effect_position + Vector2(-28, -22), Color(1.35, 0.86, 0.45, 1.0), Vector2(1.75, 1.75), 0.24)
+		"multi":
+			var offset := Vector2((hit_index % 3 - 1) * 18, -12 + (hit_index % 2) * 24)
+			_spawn_tinted_hit_effect(effect_position + offset, Color(1.15, 0.92, 1.28, 1.0), Vector2(0.72, 0.72), 0.10)
+		"arcane":
+			_spawn_tinted_hit_effect(effect_position + Vector2(-12, -12), Color(0.35, 1.05, 1.35, 1.0), Vector2(1.32, 1.32), 0.20, "res://art/generated/sprites/vfx_reward_glow.png")
+		_:
+			_spawn_hit_effect(effect_position)
+
+
+func _spawn_tinted_hit_effect(
+	effect_position: Vector2,
+	color: Color,
+	target_scale: Vector2,
+	fade_time: float,
+	texture_path: String = "res://art/generated/sprites/vfx_hit_spark.png"
+) -> void:
+	if effect_layer == null:
+		return
+	var spark := TextureRect.new()
+	spark.texture = _load_png_texture(texture_path)
+	spark.ignore_texture_size = true
+	spark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	spark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	spark.custom_minimum_size = Vector2(96, 96)
+	spark.position = effect_position
+	spark.modulate = color
+	effect_layer.add_child(spark)
+	var tween := create_tween()
+	tween.tween_property(spark, "scale", target_scale, fade_time)
+	tween.parallel().tween_property(spark, "modulate:a", 0.0, fade_time + 0.08)
+	tween.tween_callback(spark.queue_free)
+
+
+func _damage_text_color(profile: String) -> Color:
+	match profile:
+		"stab":
+			return Color(0.70, 0.95, 1.0)
+		"heavy":
+			return Color(1.0, 0.58, 0.22)
+		"multi":
+			return Color(1.0, 0.72, 0.95)
+		"arcane":
+			return Color(0.52, 0.98, 1.0)
+		_:
+			return Color(1.0, 0.36, 0.22)
+
+
+func _impact_pitch(profile: String) -> float:
+	match profile:
+		"stab":
+			return 1.25
+		"heavy":
+			return 0.78
+		"multi":
+			return 1.18 + float(_active_attack_hit_index % 3) * 0.06
+		"arcane":
+			return 1.08
+		_:
+			return 1.0
+
+
+func _impact_volume_db(profile: String) -> float:
+	match profile:
+		"heavy":
+			return 3.0
+		"multi":
+			return -3.0
+		"arcane":
+			return 0.5
+		_:
+			return 0.0
+
+
+func _impact_shake_strength(profile: String, damage: int) -> float:
+	match profile:
+		"heavy":
+			return 9.5 if damage >= 10 else 7.0
+		"multi":
+			return 2.0
+		"stab":
+			return 3.5
+		"arcane":
+			return 5.5 if damage >= 10 else 3.8
+		_:
+			return 8.0 if damage >= 12 else 3.0
+
+
+func _impact_shake_duration(profile: String, damage: int) -> float:
+	match profile:
+		"heavy":
+			return 0.24
+		"multi":
+			return 0.065
+		"stab":
+			return 0.09
+		"arcane":
+			return 0.16
+		_:
+			return 0.20 if damage >= 12 else 0.10
 
 
 func _spawn_energy_gain_effect() -> void:

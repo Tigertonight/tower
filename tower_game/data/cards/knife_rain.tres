@@ -19,4 +19,5 @@ description = "Deal 3 damage to ALL enemies. Apply 1 Ink to ALL enemies."
 upgraded_description = "Deal 5 damage to ALL enemies. Apply 1 Ink to ALL enemies."
 effects = Array[Dictionary]([{"type": "damage_all_enemies", "amount": 3}, {"type": "status_all_enemies", "status": "ink", "amount": 1}])
 upgraded_effects = Array[Dictionary]([{"type": "damage_all_enemies", "amount": 5}, {"type": "status_all_enemies", "status": "ink", "amount": 1}])
+vfx_profile = "multi"
 card_target = "all_enemies"

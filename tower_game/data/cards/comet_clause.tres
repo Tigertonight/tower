@@ -19,4 +19,5 @@ description = "Deal 10 damage to ALL enemies."
 upgraded_description = "Deal 14 damage to ALL enemies."
 effects = Array[Dictionary]([{"type": "damage_all_enemies", "amount": 10}])
 upgraded_effects = Array[Dictionary]([{"type": "damage_all_enemies", "amount": 14}])
+vfx_profile = "arcane"
 card_target = "all_enemies"

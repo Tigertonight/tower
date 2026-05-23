@@ -8,6 +8,7 @@ const PotionCatalogScript := preload("res://scripts/potions/potion_catalog.gd")
 const ShopViewScript := preload("res://scripts/ui/shop_view.gd")
 const CardPickerScript := preload("res://scripts/ui/card_picker.gd")
 const CardInstanceScript := preload("res://scripts/cards/card_instance.gd")
+const CARD_VIEW_SCENE := preload("res://scenes/combat/card_view.tscn")
 const AscensionConfigScript := preload("res://scripts/core/ascension_config.gd")
 const CharacterCatalogScript := preload("res://scripts/core/character_catalog.gd")
 const SettingsManagerScript := preload("res://scripts/core/settings_manager.gd")
@@ -1075,6 +1076,13 @@ func _relic_display_name(relic_id: String) -> String:
 	return relic_id.capitalize()
 
 
+func _potion_display_name(potion_id: String) -> String:
+	var data = potion_database.get(potion_id, null)
+	if data != null and String(data.get("display_name")) != "":
+		return _localized_name(potion_id, String(data.get("display_name")))
+	return potion_id.capitalize()
+
+
 func _character_trait_text(char_id: String) -> String:
 	var data = CharacterCatalogScript.resolve(character_catalog, char_id)
 	if data != null and String(data.get("class_trait_summary")) != "":
@@ -1305,8 +1313,16 @@ func _enter_node(row_index: int, node_index: int) -> void:
 			_show_campfire()
 		"treasure":
 			pending_node.clear()
-			_gain_random_relic()
-			_advance_after_noncombat()
+			var relic_id := _gain_random_relic()
+			_save_run()
+			_show_operation_result(
+				_tr("result.treasure.title", "Locked Drawer Opened"),
+				[_tr("result.treasure.body", "You recovered a stored relic.")],
+				[{"kind": "relic", "id": relic_id}] if relic_id != "" else [{"kind": "gold", "amount": 25}],
+				_tr("result.continue", "Continue"),
+				func() -> void: _advance_after_noncombat(),
+				"sfx_reward_pick"
+			)
 
 
 func _pending_payload_for_node(node: Dictionary) -> Dictionary:
@@ -1416,20 +1432,21 @@ func _roll_post_combat_rewards() -> void:
 		_gain_random_potion()
 
 
-func _gain_random_relic() -> void:
+func _gain_random_relic() -> String:
 	var source_pool := _roll_relic_source_pool(false)
-	_gain_random_relic_from_pool(source_pool)
+	return _gain_random_relic_from_pool(source_pool)
 
 
-func _gain_random_relic_from_pool(source_pool: String) -> void:
+func _gain_random_relic_from_pool(source_pool: String) -> String:
 	var candidates := _relic_candidates(source_pool)
 	if candidates.is_empty() and source_pool != "":
 		candidates = _relic_candidates("")
 	if candidates.is_empty():
 		gold += 25
-		return
+		return ""
 	var relic_id := candidates[reward_rng.randi_range(0, candidates.size() - 1)]
 	relic_ids.append(relic_id)
+	return relic_id
 
 
 func _relic_candidates(source_pool: String = "") -> Array[String]:
@@ -1484,7 +1501,7 @@ func _roll_relic_source_pool(for_shop: bool = false) -> String:
 	return class_pool
 
 
-func _gain_random_potion() -> void:
+func _gain_random_potion() -> String:
 	var empty_index := -1
 	for index in potions.size():
 		if potions[index] == null:
@@ -1492,13 +1509,15 @@ func _gain_random_potion() -> void:
 			break
 	if empty_index < 0:
 		gold += 25
-		return
+		return ""
 	var ids: Array[String] = []
 	for potion_id in potion_database.keys():
 		ids.append(String(potion_id))
 	if ids.is_empty():
-		return
-	potions[empty_index] = ids[reward_rng.randi_range(0, ids.size() - 1)]
+		return ""
+	var potion_id := ids[reward_rng.randi_range(0, ids.size() - 1)]
+	potions[empty_index] = potion_id
+	return potion_id
 
 
 func _potion_count() -> int:
@@ -1702,14 +1721,28 @@ func _roll_event_id() -> String:
 
 func _event_gain_relic_for_hp(cost: int) -> void:
 	player_hp = max(1, player_hp - cost)
-	_gain_random_relic()
-	_advance_after_noncombat()
+	var relic_id := _gain_random_relic()
+	_show_operation_result(
+		_tr("result.relic.title", "Relic Acquired"),
+		[_tr("result.cost.hp", "Lost %d HP.") % cost],
+		[{"kind": "relic", "id": relic_id}] if relic_id != "" else [{"kind": "gold", "amount": 25}],
+		_tr("result.continue", "Continue"),
+		func() -> void: _advance_after_noncombat(),
+		"sfx_reward_pick"
+	)
 
 
 func _event_gain_class_relic_for_hp(cost: int) -> void:
 	player_hp = max(1, player_hp - cost)
-	_gain_random_relic_from_pool(_current_character_class_id())
-	_advance_after_noncombat()
+	var relic_id := _gain_random_relic_from_pool(_current_character_class_id())
+	_show_operation_result(
+		_tr("result.relic.title", "Relic Acquired"),
+		[_tr("result.cost.hp", "Lost %d HP.") % cost],
+		[{"kind": "relic", "id": relic_id}] if relic_id != "" else [{"kind": "gold", "amount": 25}],
+		_tr("result.continue", "Continue"),
+		func() -> void: _advance_after_noncombat(),
+		"sfx_reward_pick"
+	)
 
 
 func _event_gain_specific_card(card_id: String) -> void:
@@ -1750,8 +1783,18 @@ func _event_buy_random_card(price: int) -> void:
 
 func _event_red_string_accept() -> void:
 	run_deck_ids.append("oath_pressure")
-	_gain_random_relic()
-	_show_event_card_gain_result("oath_pressure", _tr("event.reward.relic_also", "A relic was also added to your pack."))
+	var relic_id := _gain_random_relic()
+	var items: Array = [{"kind": "card", "id": "oath_pressure"}]
+	if relic_id != "":
+		items.append({"kind": "relic", "id": relic_id})
+	_show_operation_result(
+		_tr("event.reward.title", "Card Acquired"),
+		[_tr("event.reward.relic_also", "A relic was also added to your pack.")],
+		items,
+		_tr("result.continue", "Continue"),
+		func() -> void: _advance_after_noncombat(),
+		"sfx_reward_pick"
+	)
 
 
 func _event_lose_hp(amount: int) -> void:
@@ -1794,8 +1837,15 @@ func _event_drink_ink(hp_cost: int, gold_gain: int) -> void:
 
 
 func _event_gain_potion() -> void:
-	_gain_random_potion()
-	_advance_after_noncombat()
+	var potion_id := _gain_random_potion()
+	_show_operation_result(
+		_tr("result.potion.title", "Potion Acquired"),
+		[],
+		[{"kind": "potion", "id": potion_id}] if potion_id != "" else [{"kind": "gold", "amount": 25}],
+		_tr("result.continue", "Continue"),
+		func() -> void: _advance_after_noncombat(),
+		"sfx_reward_pick"
+	)
 
 
 func _event_remove_any_card_for_heal(heal_amount: int) -> void:
@@ -1841,31 +1891,25 @@ func _event_loose_page_speak() -> void:
 func _show_event_card_gain_result(card_id: String, extra_line: String = "") -> void:
 	_save_run()
 	var card_name := _card_display_name(card_id)
-	var description := ""
 	var rarity := ""
 	var card_type := ""
 	if card_database.has(card_id):
 		var data = card_database[card_id]
-		description = String(data.description)
 		rarity = String(data.rarity).capitalize()
 		card_type = String(data.card_type).capitalize()
 	var lines: Array[String] = []
 	lines.append(_tr("event.reward.card_added", "Added to deck: %s") % card_name)
 	if rarity != "" or card_type != "":
 		lines.append("%s  %s" % [rarity, card_type])
-	if description != "":
-		lines.append("")
-		lines.append(description)
 	if extra_line != "":
-		lines.append("")
 		lines.append(extra_line)
-	var am = _audio()
-	if am != null:
-		am.play_sfx("sfx_reward_pick")
-	_show_choice_screen(
+	_show_operation_result(
 		_tr("event.reward.title", "Card Acquired"),
-		"\n".join(lines),
-		[{"text": _tr("event.reward.continue", "Add it to the deck"), "action": func() -> void: _advance_after_noncombat()}]
+		lines,
+		[{"kind": "card", "id": card_id}],
+		_tr("event.reward.continue", "Add it to the deck"),
+		func() -> void: _advance_after_noncombat(),
+		"sfx_reward_pick"
 	)
 
 
@@ -1914,10 +1958,20 @@ func _refresh_shop_view() -> void:
 	current_screen.set_offers(gold, current_shop_cards, current_shop_relics, current_shop_potions, _remove_price(), _has_card("strike_form") and run_deck_ids.size() > 8)
 
 
+func _remove_shop_offer(offers: Array, offer_id: String) -> void:
+	for index in range(offers.size() - 1, -1, -1):
+		if String(offers[index].get("id", "")) == offer_id:
+			offers.remove_at(index)
+			return
+
+
 func _on_shop_card_purchased(card_id: String, price: int) -> void:
+	var purchased := false
 	if gold >= price:
 		gold -= price
 		run_deck_ids.append(card_id)
+		_remove_shop_offer(current_shop_cards, card_id)
+		purchased = true
 		var am = _audio()
 		if am != null:
 			am.play_sfx("sfx_shop_buy")
@@ -1925,12 +1979,24 @@ func _on_shop_card_purchased(card_id: String, price: int) -> void:
 			current_screen.mark_card_sold(card_id)
 	_save_run()
 	_refresh_shop_view()
+	if purchased:
+		_show_operation_result(
+			_tr("result.shop.card_title", "Card Purchased"),
+			[_tr("result.shop.price", "Paid %d gold.") % price],
+			[{"kind": "card", "id": card_id}],
+			_tr("result.shop.back", "Back to shop"),
+			func() -> void: _refresh_shop_view(),
+			"sfx_shop_buy"
+		)
 
 
 func _on_shop_relic_purchased(relic_id: String, price: int) -> void:
+	var purchased := false
 	if gold >= price and not relic_ids.has(relic_id):
 		gold -= price
 		relic_ids.append(relic_id)
+		_remove_shop_offer(current_shop_relics, relic_id)
+		purchased = true
 		var am = _audio()
 		if am != null:
 			am.play_sfx("sfx_shop_buy")
@@ -1938,15 +2004,27 @@ func _on_shop_relic_purchased(relic_id: String, price: int) -> void:
 			current_screen.mark_relic_sold(relic_id)
 	_save_run()
 	_refresh_shop_view()
+	if purchased:
+		_show_operation_result(
+			_tr("result.shop.relic_title", "Relic Purchased"),
+			[_tr("result.shop.price", "Paid %d gold.") % price],
+			[{"kind": "relic", "id": relic_id}],
+			_tr("result.shop.back", "Back to shop"),
+			func() -> void: _refresh_shop_view(),
+			"sfx_shop_buy"
+		)
 
 
 func _on_shop_potion_purchased(potion_id: String, price: int) -> void:
+	var purchased := false
 	if gold >= price and _potion_count() < 3:
 		gold -= price
 		for index in potions.size():
 			if potions[index] == null:
 				potions[index] = potion_id
+				purchased = true
 				break
+		_remove_shop_offer(current_shop_potions, potion_id)
 		var am = _audio()
 		if am != null:
 			am.play_sfx("sfx_shop_buy")
@@ -1954,6 +2032,15 @@ func _on_shop_potion_purchased(potion_id: String, price: int) -> void:
 			current_screen.mark_potion_sold(potion_id)
 	_save_run()
 	_refresh_shop_view()
+	if purchased:
+		_show_operation_result(
+			_tr("result.shop.potion_title", "Potion Purchased"),
+			[_tr("result.shop.price", "Paid %d gold.") % price],
+			[{"kind": "potion", "id": potion_id}],
+			_tr("result.shop.back", "Back to shop"),
+			func() -> void: _refresh_shop_view(),
+			"sfx_shop_buy"
+		)
 
 
 func _on_shop_remove_requested(_price_from_view: int) -> void:
@@ -2178,21 +2265,47 @@ func _on_run_deck_card_picked(_card_instance, source_index: int, picker: Control
 	if picker != null:
 		picker.queue_free()
 	var action := String(pending_card_pick_context.get("action", ""))
+	var result: Dictionary = {}
 	if source_index >= 0 and source_index < run_deck_ids.size():
+		var before_entry := String(run_deck_ids[source_index])
 		if action == "upgrade" and not run_deck_ids[source_index].ends_with("+"):
 			run_deck_ids[source_index] = "%s+" % run_deck_ids[source_index]
+			result = {
+				"title": _tr("result.upgrade.title", "Card Upgraded"),
+				"lines": [_tr("result.upgrade.body", "%s has been upgraded.") % _card_display_name(run_deck_ids[source_index])],
+				"items": [{"kind": "card_change", "before": before_entry, "after": String(run_deck_ids[source_index])}],
+				"sfx": "sfx_campfire_upgrade"
+			}
 		elif action == "remove" and run_deck_ids[source_index].trim_suffix("+") == "strike_form":
 			run_deck_ids.remove_at(source_index)
 			card_removals += 1
+			result = {
+				"title": _tr("result.remove.title", "Card Removed"),
+				"lines": [_tr("result.remove.body", "%s left your deck.") % _card_display_name(before_entry)],
+				"items": [{"kind": "card", "id": before_entry}],
+				"sfx": "sfx_card_shuffle"
+			}
 		elif action == "remove_any" and run_deck_ids.size() > 8:
 			run_deck_ids.remove_at(source_index)
 			card_removals += 1
+			result = {
+				"title": _tr("result.remove.title", "Card Removed"),
+				"lines": [_tr("result.remove.body", "%s left your deck.") % _card_display_name(before_entry)],
+				"items": [{"kind": "card", "id": before_entry}],
+				"sfx": "sfx_card_shuffle"
+			}
 		elif action == "transform":
 			var old_id := String(run_deck_ids[source_index]).trim_suffix("+")
 			var replacement := _random_transform_replacement(old_id)
 			if replacement != "":
 				run_deck_ids[source_index] = replacement
-	_finish_card_picker_context()
+				result = {
+					"title": _tr("result.transform.title", "Card Transformed"),
+					"lines": [_tr("result.transform.body", "%s became %s.") % [_card_display_name(before_entry), _card_display_name(replacement)]],
+					"items": [{"kind": "card_change", "before": before_entry, "after": replacement}],
+					"sfx": "sfx_campfire_upgrade"
+				}
+	_finish_card_picker_context(result)
 
 
 func _on_run_deck_pick_cancelled(picker: Control) -> void:
@@ -2213,17 +2326,34 @@ func _on_run_deck_pick_cancelled(picker: Control) -> void:
 	_finish_card_picker_context()
 
 
-func _finish_card_picker_context() -> void:
+func _finish_card_picker_context(result: Dictionary = {}) -> void:
 	var return_to_map := bool(pending_card_pick_context.get("return_to_map", true))
 	var post_heal := int(pending_card_pick_context.get("post_heal", 0))
 	if post_heal > 0:
 		player_hp = min(player_max_hp, player_hp + post_heal)
-	pending_card_pick_context.clear()
-	if return_to_map:
-		_advance_after_noncombat()
-	else:
-		_save_run()
-		_refresh_shop_view()
+		if not result.is_empty():
+			var lines: Array = result.get("lines", [])
+			lines.append(_tr("result.heal", "Healed %d HP.") % post_heal)
+			result["lines"] = lines
+	var finish := func() -> void:
+		pending_card_pick_context.clear()
+		if return_to_map:
+			_advance_after_noncombat()
+		else:
+			_save_run()
+			_refresh_shop_view()
+	if result.is_empty():
+		finish.call()
+		return
+	_save_run()
+	_show_operation_result(
+		String(result.get("title", _tr("result.title", "Result"))),
+		result.get("lines", []),
+		result.get("items", []),
+		_tr("result.continue", "Continue"),
+		finish,
+		String(result.get("sfx", "sfx_reward_pick"))
+	)
 
 
 func _deck_summary_text() -> String:
@@ -2598,6 +2728,174 @@ func _advance_after_noncombat() -> void:
 	pending_node.clear()
 	_save_run()
 	_show_map()
+
+
+func _show_operation_result(title_text: String, lines: Array, items: Array, continue_text: String, continue_action: Callable, sfx_id: String = "sfx_reward_pick") -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 60
+	add_child(layer)
+
+	var screen := Control.new()
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(screen)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.72)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.add_child(dim)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -470
+	panel.offset_top = -270
+	panel.offset_right = 470
+	panel.offset_bottom = 270
+	panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.045, 0.034, 0.026, 0.96), Color(0.92, 0.66, 0.28, 0.98)))
+	screen.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 14)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = title_text
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color(1.0, 0.84, 0.46))
+	box.add_child(title)
+
+	var body := Label.new()
+	var string_lines: Array[String] = []
+	for line in lines:
+		var line_text := String(line)
+		if line_text != "":
+			string_lines.append(line_text)
+	body.text = "\n".join(string_lines)
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_font_size_override("font_size", 16)
+	body.modulate = Color(0.92, 0.86, 0.74, 0.98)
+	box.add_child(body)
+
+	var item_row := HBoxContainer.new()
+	item_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	item_row.add_theme_constant_override("separation", 18)
+	item_row.custom_minimum_size = Vector2(0, 205)
+	box.add_child(item_row)
+	for item in items:
+		_add_result_item(item_row, item)
+
+	var continue_button := Button.new()
+	continue_button.text = continue_text
+	continue_button.custom_minimum_size = Vector2(240, 42)
+	continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	continue_button.add_theme_font_size_override("font_size", 15)
+	continue_button.add_theme_stylebox_override("normal", _choice_card_box(Color(0.090, 0.060, 0.036, 0.90), Color(0.74, 0.50, 0.20, 0.92), 1))
+	continue_button.add_theme_stylebox_override("hover", _choice_card_box(Color(0.130, 0.078, 0.040, 0.98), Color(1.00, 0.70, 0.26, 1.0), 2))
+	continue_button.pressed.connect(func() -> void:
+		if is_instance_valid(layer):
+			layer.queue_free()
+		continue_action.call()
+	)
+	box.add_child(continue_button)
+
+	panel.scale = Vector2(0.96, 0.96)
+	panel.modulate = Color(1, 1, 1, 0.0)
+	var tween := create_tween()
+	tween.tween_property(panel, "modulate:a", 1.0, 0.12)
+	tween.parallel().tween_property(panel, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var am = _audio()
+	if am != null and sfx_id != "":
+		am.play_sfx(sfx_id)
+
+
+func _add_result_item(parent: HBoxContainer, item: Dictionary) -> void:
+	var kind := String(item.get("kind", ""))
+	match kind:
+		"card":
+			parent.add_child(_result_card_view(String(item.get("id", ""))))
+		"card_change":
+			parent.add_child(_result_card_change_view(String(item.get("before", "")), String(item.get("after", ""))))
+		_:
+			parent.add_child(_result_badge_view(item))
+
+
+func _result_card_view(card_entry: String) -> Control:
+	var holder := CenterContainer.new()
+	holder.custom_minimum_size = Vector2(150, 190)
+	var card_id := card_entry.trim_suffix("+")
+	if not card_database.has(card_id):
+		return _result_badge_view({"kind": "text", "label": card_entry})
+	var inst = CardInstanceScript.new()
+	inst.setup(card_database[card_id], card_entry.ends_with("+"))
+	var card_view = CARD_VIEW_SCENE.instantiate()
+	card_view.setup(inst, 99, false)
+	if card_view.has_method("set_hover_lift_enabled"):
+		card_view.set_hover_lift_enabled(false)
+	card_view.scale = Vector2(0.92, 0.92)
+	holder.add_child(card_view)
+	return holder
+
+
+func _result_card_change_view(before_entry: String, after_entry: String) -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 12)
+	row.add_child(_result_card_view(before_entry))
+	var arrow := Label.new()
+	arrow.text = ">"
+	arrow.add_theme_font_size_override("font_size", 30)
+	arrow.add_theme_color_override("font_color", Color(1.0, 0.78, 0.34))
+	row.add_child(arrow)
+	row.add_child(_result_card_view(after_entry))
+	return row
+
+
+func _result_badge_view(item: Dictionary) -> Control:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(190, 150)
+	panel.add_theme_stylebox_override("normal", _choice_card_box(Color(0.070, 0.054, 0.040, 0.94), Color(0.72, 0.52, 0.24, 0.92), 1))
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(58, 58)
+	icon.ignore_texture_size = true
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	box.add_child(icon)
+
+	var label := Label.new()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", 15)
+	box.add_child(label)
+
+	var kind := String(item.get("kind", ""))
+	match kind:
+		"relic":
+			var relic_id := String(item.get("id", ""))
+			icon.texture = _load_png_texture("res://art/generated/icons/relic_%s.png" % relic_id)
+			if icon.texture == null:
+				icon.texture = _load_png_texture("res://art/generated/ui/relic_slot.png")
+			label.text = _relic_display_name(relic_id)
+		"potion":
+			var potion_id := String(item.get("id", ""))
+			icon.texture = _load_png_texture("res://art/generated/icons/potion_%s.png" % potion_id)
+			if icon.texture == null:
+				icon.texture = _load_png_texture("res://art/generated/ui/potion_slot.png")
+			label.text = _potion_display_name(potion_id)
+		"gold":
+			icon.texture = _load_png_texture("res://art/generated/ui/price_tag.png")
+			label.text = _tr("result.gold", "+%d gold") % int(item.get("amount", 0))
+		_:
+			icon.texture = _load_png_texture("res://art/generated/sprites/archive_key.png")
+			label.text = String(item.get("label", ""))
+	return panel
 
 
 func _show_choice_screen(title_text: String, body_text: String, choices: Array) -> void:
