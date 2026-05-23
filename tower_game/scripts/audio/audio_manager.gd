@@ -94,6 +94,8 @@ func _ready() -> void:
 		p.bus = BUS_SFX
 		add_child(p)
 		_sfx_players.append(p)
+	_wire_button_sounds(get_tree().root)
+	get_tree().node_added.connect(_on_node_added)
 
 
 func _ensure_buses() -> void:
@@ -246,6 +248,35 @@ func set_test_silenced(enabled: bool) -> void:
 	_test_silenced = enabled
 	if enabled:
 		_shutdown_playback()
+
+
+func _on_node_added(node: Node) -> void:
+	_wire_button_sounds(node)
+
+
+func _wire_button_sounds(node: Node) -> void:
+	if node == null:
+		return
+	if node is BaseButton:
+		_wire_single_button(node as BaseButton)
+	for child in node.get_children():
+		_wire_button_sounds(child)
+
+
+func _wire_single_button(button: BaseButton) -> void:
+	if button.has_meta("tower_audio_wired"):
+		return
+	button.set_meta("tower_audio_wired", true)
+	button.mouse_entered.connect(_on_button_mouse_entered)
+	button.pressed.connect(_on_button_pressed)
+
+
+func _on_button_mouse_entered() -> void:
+	play_sfx("sfx_ui_hover_soft", -7.0, 0.04)
+
+
+func _on_button_pressed() -> void:
+	play_sfx("sfx_ui_button_click", -4.0, 0.03)
 
 
 func _shutdown_playback() -> void:

@@ -18,7 +18,7 @@ var settings_manager
 # A1.7 pause overlay — Control we add directly under the run scene root and
 # toggle visible. Sits above the current screen and pauses combat tween updates
 # via `get_tree().paused = true`.
-var pause_overlay: Control = null
+var pause_overlay: Node = null
 var run_deck_ids: Array[String] = []
 var player_max_hp := 76
 var player_hp := 76
@@ -31,6 +31,7 @@ var current_screen: Control
 var run_id := ""
 var run_seed := 1
 var current_node_id := "L0_0"
+var pending_node: Dictionary = {}
 var ascension_level := 0
 var selected_ascension_level := 0
 # Currently-selected character for the next "Start New Run". The active run
@@ -139,7 +140,7 @@ func _toggle_language() -> void:
 
 
 func _rebuild_current_screen_for_language() -> void:
-	if pause_overlay != null and is_instance_valid(pause_overlay) and pause_overlay.visible:
+	if pause_overlay != null and is_instance_valid(pause_overlay):
 		_close_pause_menu()
 		_open_pause_menu()
 		return
@@ -195,6 +196,7 @@ func _load_schema_v1(data: Dictionary) -> void:
 	for relic_entry in run.get("relics", [{"relic_id": "sealed_badge"}]):
 		relic_ids.append(String(relic_entry.get("relic_id", "sealed_badge")))
 	current_node_id = String(run.get("current_node_id", "L0_0"))
+	pending_node = run.get("pending_node", {})
 	ascension_level = AscensionConfigScript.clamp_level(int(run.get("ascension_level", 0)))
 	completed = bool(run.get("completed", false))
 	story_seen = bool(run.get("story_seen", false))
@@ -229,6 +231,7 @@ func _load_legacy_save(data: Dictionary) -> void:
 	current_act = 1
 	map_nodes = MapGeneratorScript.generate(run_seed, current_act)
 	current_node_id = "L0_0"
+	pending_node.clear()
 	MapGeneratorScript.mark_visited(map_nodes, current_node_id)
 	floor_index = 1
 
@@ -240,6 +243,7 @@ func _start_new_run(character_override: String = "") -> void:
 	current_act = 1
 	map_nodes = MapGeneratorScript.generate(run_seed, current_act)
 	current_node_id = "L0_0"
+	pending_node.clear()
 	MapGeneratorScript.mark_visited(map_nodes, current_node_id)
 	ascension_level = AscensionConfigScript.clamp_level(selected_ascension_level)
 	var locked_character_id := character_override
@@ -317,6 +321,7 @@ func _save_run() -> void:
 			"act": current_act,
 			"ascension_level": ascension_level,
 			"current_node_id": current_node_id,
+			"pending_node": pending_node,
 			"completed": completed,
 			"story_seen": story_seen,
 			"player": {
@@ -469,12 +474,6 @@ func _show_map() -> void:
 	stats.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	stats.add_theme_font_size_override("font_size", 15)
 	header.add_child(stats)
-
-	var reset := Button.new()
-	reset.text = _tr("map.new", "New Run")
-	reset.custom_minimum_size = Vector2(120, 40)
-	reset.pressed.connect(_on_new_run_pressed)
-	header.add_child(reset)
 
 	if completed:
 		_add_completion(root)
@@ -650,7 +649,7 @@ func _show_main_menu() -> void:
 	continue_button.text = _tr("main.continue", "Continue Run")
 	continue_button.custom_minimum_size = Vector2(0, 44)
 	continue_button.disabled = run_deck_ids.is_empty()
-	continue_button.pressed.connect(func() -> void: _show_map())
+	continue_button.pressed.connect(_continue_run)
 	box.add_child(continue_button)
 
 	var new_button := Button.new()
@@ -673,6 +672,56 @@ func _show_main_menu() -> void:
 	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(controls)
+
+
+func _continue_run() -> void:
+	if pending_node.is_empty():
+		_recover_pending_node_from_current_position()
+	if not pending_node.is_empty():
+		_resume_pending_node()
+		return
+	_show_map()
+
+
+func _recover_pending_node_from_current_position() -> void:
+	var node := MapGeneratorScript.find_node(map_nodes, current_node_id)
+	if node.is_empty():
+		return
+	var node_type := String(node.get("type", ""))
+	if node_type == "start" or node_type == "treasure":
+		return
+	pending_node = _pending_payload_for_node(node)
+	if node_type == "event" and String(pending_node.get("event_id", "")) == "":
+		var event_id := _roll_event_id()
+		pending_node["event_id"] = event_id
+		if not events_seen.has(event_id):
+			events_seen.append(event_id)
+	_save_run()
+
+
+func _resume_pending_node() -> void:
+	var node_id := String(pending_node.get("id", current_node_id))
+	var node := MapGeneratorScript.find_node(map_nodes, node_id)
+	if node.is_empty():
+		pending_node.clear()
+		_save_run()
+		_show_map()
+		return
+	current_node_id = node_id
+	floor_index = int(node.get("layer", floor_index))
+	match String(pending_node.get("type", node.get("type", ""))):
+		"combat", "elite", "boss":
+			_show_combat(String(pending_node.get("type", node.get("type", ""))), String(pending_node.get("title", node.get("title", ""))), String(pending_node.get("encounter_id", node.get("encounter_id", ""))))
+		"event":
+			_show_event(String(pending_node.get("event_id", "")), false)
+		"shop":
+			_show_shop()
+		"campfire":
+			_show_campfire()
+		_:
+			pending_node.clear()
+			_save_run()
+			_show_map()
 
 
 func _show_character_select_menu() -> void:
@@ -1229,21 +1278,45 @@ func _enter_node(row_index: int, node_index: int) -> void:
 	current_node_id = String(node.id)
 	floor_index = int(node.get("layer", floor_index))
 	MapGeneratorScript.mark_visited(map_nodes, current_node_id)
-	_save_run()
 	match node.type:
 		"start":
+			pending_node.clear()
+			_save_run()
 			_show_map()
 		"combat", "elite", "boss":
+			pending_node = _pending_payload_for_node(node)
+			_save_run()
 			_show_combat(node.type, node.title, String(node.get("encounter_id", "")))
 		"event":
-			_show_event()
+			var event_id := _roll_event_id()
+			pending_node = _pending_payload_for_node(node)
+			pending_node["event_id"] = event_id
+			if not events_seen.has(event_id):
+				events_seen.append(event_id)
+			_save_run()
+			_show_event(event_id, false)
 		"shop":
+			pending_node = _pending_payload_for_node(node)
+			_save_run()
 			_show_shop()
 		"campfire":
+			pending_node = _pending_payload_for_node(node)
+			_save_run()
 			_show_campfire()
 		"treasure":
+			pending_node.clear()
 			_gain_random_relic()
 			_advance_after_noncombat()
+
+
+func _pending_payload_for_node(node: Dictionary) -> Dictionary:
+	return {
+		"id": String(node.get("id", "")),
+		"type": String(node.get("type", "")),
+		"title": String(node.get("title", "")),
+		"encounter_id": String(node.get("encounter_id", "")),
+		"event_id": String(node.get("event_id", ""))
+	}
 
 
 func _show_combat(node_type: String, node_title: String = "", encounter_id: String = "") -> void:
@@ -1257,7 +1330,8 @@ func _show_combat(node_type: String, node_title: String = "", encounter_id: Stri
 	combat.combat_reward_skipped.connect(_on_combat_reward_skipped)
 	combat.combat_lost.connect(_on_combat_lost)
 	combat.boss_defeated.connect(_on_boss_defeated)
-	combat.reset_run_requested.connect(_on_new_run_pressed)
+	combat.reset_run_requested.connect(_restart_current_combat_node)
+	combat.end_run_requested.connect(_return_to_main_menu)
 	# Apply persisted "fast resolve" preference from the pause menu.
 	if settings_manager != null and combat.has_method("set_fast_resolve"):
 		combat.set_fast_resolve(bool(settings_manager.get_value("fast_resolve")))
@@ -1268,6 +1342,7 @@ func _show_combat(node_type: String, node_title: String = "", encounter_id: Stri
 
 
 func _on_combat_reward_chosen(card_id: String, remaining_hp: int) -> void:
+	pending_node.clear()
 	run_deck_ids.append(card_id)
 	player_hp = remaining_hp
 	gold += _combat_gold_reward()
@@ -1279,6 +1354,7 @@ func _on_combat_reward_chosen(card_id: String, remaining_hp: int) -> void:
 
 
 func _on_combat_reward_skipped(remaining_hp: int) -> void:
+	pending_node.clear()
 	player_hp = remaining_hp
 	gold += _combat_gold_reward() + 7
 	_roll_post_combat_rewards()
@@ -1289,10 +1365,12 @@ func _on_combat_reward_skipped(remaining_hp: int) -> void:
 
 
 func _on_combat_lost() -> void:
+	pending_node.clear()
 	_show_run_summary("defeat")
 
 
 func _on_boss_defeated(remaining_hp: int) -> void:
+	pending_node.clear()
 	player_hp = remaining_hp
 	gold += 60
 	_capture_combat_rng_state()
@@ -1431,12 +1509,14 @@ func _potion_count() -> int:
 	return count
 
 
-func _show_event() -> void:
+func _show_event(event_id: String = "", should_register_event: bool = true) -> void:
 	var am = _audio()
 	if am != null:
 		am.play_sfx("sfx_event_open")
-	var event_id := _roll_event_id()
-	events_seen.append(event_id)
+	if event_id == "":
+		event_id = _roll_event_id()
+	if should_register_event and not events_seen.has(event_id):
+		events_seen.append(event_id)
 	match event_id:
 		"ev_quiet_stack":
 			_show_choice_screen(
@@ -1635,6 +1715,8 @@ func _event_gain_class_relic_for_hp(cost: int) -> void:
 func _event_gain_specific_card(card_id: String) -> void:
 	if card_database.has(card_id):
 		run_deck_ids.append(card_id)
+		_show_event_card_gain_result(card_id)
+		return
 	_advance_after_noncombat()
 
 
@@ -1642,13 +1724,16 @@ func _event_gain_card_and_gold(card_id: String, amount: int) -> void:
 	if card_database.has(card_id):
 		run_deck_ids.append(card_id)
 	gold += amount
-	_advance_after_noncombat()
+	if card_database.has(card_id):
+		_show_event_card_gain_result(card_id, _tr("event.reward.gold", "Also gained %d gold.") % amount)
+	else:
+		_advance_after_noncombat()
 
 
 func _event_remove_card_for_gold(price: int) -> void:
-	if gold >= price and run_deck_ids.size() > 8:
+	if gold >= price and _has_card("strike_form") and run_deck_ids.size() > 8:
 		gold -= price
-		_show_card_picker_for_remove(_tr("picker.remove_strike.title", "Remove a Strike Form"), _tr("picker.remove_strike.hint", "Choose the copy to remove from this run."), true, price)
+		_show_card_picker_for_remove(_tr("picker.remove_strike.title", "Remove a Strike Form"), _tr("picker.remove_strike.hint", "Choose the copy to remove from this run."), true, price, "event")
 	else:
 		_show_unavailable_event_choice(_tr("event.unavailable.remove", "Need enough gold and a deck larger than 8 cards."))
 
@@ -1656,14 +1741,17 @@ func _event_remove_card_for_gold(price: int) -> void:
 func _event_buy_random_card(price: int) -> void:
 	if gold >= price:
 		gold -= price
-		run_deck_ids.append(_random_reward_card_id())
-	_advance_after_noncombat()
+		var card_id := _random_reward_card_id()
+		run_deck_ids.append(card_id)
+		_show_event_card_gain_result(card_id, _tr("event.reward.gold_spent", "Paid %d gold.") % price)
+		return
+	_show_unavailable_event_choice(_tr("event.unavailable.gold", "You do not have enough gold."))
 
 
 func _event_red_string_accept() -> void:
 	run_deck_ids.append("oath_pressure")
 	_gain_random_relic()
-	_advance_after_noncombat()
+	_show_event_card_gain_result("oath_pressure", _tr("event.reward.relic_also", "A relic was also added to your pack."))
 
 
 func _event_lose_hp(amount: int) -> void:
@@ -1674,21 +1762,21 @@ func _event_lose_hp(amount: int) -> void:
 func _event_upgrade_for_gold(price: int) -> void:
 	if gold >= price:
 		gold -= price
-		_show_card_picker_for_upgrade(_tr("picker.upgrade.title", "Upgrade a card"), _tr("picker.upgrade.hint", "Choose an unupgraded card to improve."), true, price, 0)
+		_show_card_picker_for_upgrade(_tr("picker.upgrade.title", "Upgrade a card"), _tr("picker.upgrade.hint", "Choose an unupgraded card to improve."), true, price, 0, "event")
 	else:
 		_show_unavailable_event_choice(_tr("event.unavailable.gold", "You do not have enough gold."))
 
 
 func _event_upgrade_for_hp(cost: int) -> void:
 	player_hp = max(1, player_hp - cost)
-	_show_card_picker_for_upgrade(_tr("picker.upgrade.title", "Upgrade a card"), _tr("picker.upgrade.hint", "Choose an unupgraded card to improve."), true, 0, cost)
+	_show_card_picker_for_upgrade(_tr("picker.upgrade.title", "Upgrade a card"), _tr("picker.upgrade.hint", "Choose an unupgraded card to improve."), true, 0, cost, "event")
 
 
 func _event_transform_card() -> void:
 	if not _has_transform_target():
-		_advance_after_noncombat()
+		_show_unavailable_event_choice(_tr("event.unavailable.transform", "Need enough gold and a non-basic card that can be transformed."))
 		return
-	_show_card_picker_for_transform(_tr("picker.transform.title", "Transform a card"), _tr("picker.transform.hint", "Choose a card. The lantern rewrites it into another of the same type."), true)
+	_show_card_picker_for_transform(_tr("picker.transform.title", "Transform a card"), _tr("picker.transform.hint", "Choose a card. The lantern rewrites it into another of the same type."), true, 0, 0, "event")
 
 
 func _event_transform_card_for_gold(price: int) -> void:
@@ -1696,7 +1784,7 @@ func _event_transform_card_for_gold(price: int) -> void:
 		_show_unavailable_event_choice(_tr("event.unavailable.transform", "Need enough gold and a non-basic card that can be transformed."))
 		return
 	gold -= price
-	_show_card_picker_for_transform(_tr("picker.transform.title", "Transform a card"), _tr("picker.transform_green.hint", "Choose a card to rewrite under green wax flame."), true)
+	_show_card_picker_for_transform(_tr("picker.transform.title", "Transform a card"), _tr("picker.transform_green.hint", "Choose a card to rewrite under green wax flame."), true, price, 0, "event")
 
 
 func _event_drink_ink(hp_cost: int, gold_gain: int) -> void:
@@ -1714,7 +1802,7 @@ func _event_remove_any_card_for_heal(heal_amount: int) -> void:
 	if run_deck_ids.size() <= 8:
 		_show_unavailable_event_choice(_tr("event.unavailable.deck", "Your deck is too small to offer a card."))
 		return
-	pending_card_pick_context = {"action": "remove_any", "return_to_map": true, "refund_gold": 0, "refund_hp": 0, "post_heal": heal_amount}
+	pending_card_pick_context = {"action": "remove_any", "return_to_map": true, "refund_gold": 0, "refund_hp": 0, "post_heal": heal_amount, "cancel_target": "event"}
 	_show_run_deck_picker(_tr("picker.offer.title", "Offer a card"), _tr("picker.offer.hint", "Remove one card from this run."), Callable(self, "_is_remove_any_pickable"))
 
 
@@ -1737,8 +1825,9 @@ func _event_buy_max_hp(price: int, amount: int) -> void:
 
 func _event_buy_random_card_for_hp(hp_cost: int) -> void:
 	player_hp = max(1, player_hp - hp_cost)
-	run_deck_ids.append(_random_reward_card_id())
-	_advance_after_noncombat()
+	var card_id := _random_reward_card_id()
+	run_deck_ids.append(card_id)
+	_show_event_card_gain_result(card_id, _tr("event.reward.hp_spent", "Lost %d HP.") % hp_cost)
 
 
 func _event_loose_page_speak() -> void:
@@ -1749,12 +1838,50 @@ func _event_loose_page_speak() -> void:
 	_advance_after_noncombat()
 
 
+func _show_event_card_gain_result(card_id: String, extra_line: String = "") -> void:
+	_save_run()
+	var card_name := _card_display_name(card_id)
+	var description := ""
+	var rarity := ""
+	var card_type := ""
+	if card_database.has(card_id):
+		var data = card_database[card_id]
+		description = String(data.description)
+		rarity = String(data.rarity).capitalize()
+		card_type = String(data.card_type).capitalize()
+	var lines: Array[String] = []
+	lines.append(_tr("event.reward.card_added", "Added to deck: %s") % card_name)
+	if rarity != "" or card_type != "":
+		lines.append("%s  %s" % [rarity, card_type])
+	if description != "":
+		lines.append("")
+		lines.append(description)
+	if extra_line != "":
+		lines.append("")
+		lines.append(extra_line)
+	var am = _audio()
+	if am != null:
+		am.play_sfx("sfx_reward_pick")
+	_show_choice_screen(
+		_tr("event.reward.title", "Card Acquired"),
+		"\n".join(lines),
+		[{"text": _tr("event.reward.continue", "Add it to the deck"), "action": func() -> void: _advance_after_noncombat()}]
+	)
+
+
 func _show_unavailable_event_choice(reason: String) -> void:
 	_show_choice_screen(
 		_tr("event.unavailable.title", "Choice unavailable"),
 		reason,
-		[{"text": _tr("event.unavailable.continue", "Return to the route."), "action": func() -> void: _advance_after_noncombat()}]
+		[{"text": _tr("event.unavailable.continue", "Return to the event."), "action": func() -> void: _return_to_pending_event_or_map()}]
 	)
+
+
+func _return_to_pending_event_or_map() -> void:
+	if not pending_node.is_empty() and String(pending_node.get("type", "")) == "event":
+		_show_event(String(pending_node.get("event_id", "")), false)
+		return
+	_show_map()
 
 
 func _show_shop() -> void:
@@ -1955,11 +2082,11 @@ func _show_campfire() -> void:
 
 	_add_campfire_action(action_box, _tr("camp.rest", "Rest: heal 30% HP"), _tr("camp.rest_hint", "Heal and return to the map."), _load_png_texture("res://art/generated/ui/campfire_rest_icon.png"), Callable(self, "_campfire_rest"), true)
 	_add_campfire_action(action_box, _tr("camp.upgrade", "Smith: upgrade a card"), _tr("camp.upgrade_hint", "Choose one unupgraded card."), _load_png_texture("res://art/generated/ui/campfire_upgrade_icon.png"), func() -> void:
-		_show_card_picker_for_upgrade(_tr("camp.upgrade", "Waxlight upgrade"), _tr("camp.upgrade_hint", "Choose one unupgraded card."), true), _has_upgrade_target())
+		_show_card_picker_for_upgrade(_tr("camp.upgrade", "Waxlight upgrade"), _tr("camp.upgrade_hint", "Choose one unupgraded card."), true, 0, 0, "campfire"), _has_upgrade_target())
 	_add_campfire_action(action_box, _tr("camp.remove", "Burn: remove a card"), _tr("camp.remove_hint", "Burn a non-basic card permanently."), null, func() -> void:
-		_show_card_picker_for_remove_any(_tr("camp.remove", "Waxlight Burn"), _tr("camp.remove_hint", "Burn a non-basic card permanently."), true), run_deck_ids.size() > 8)
+		_show_card_picker_for_remove_any(_tr("camp.remove", "Waxlight Burn"), _tr("camp.remove_hint", "Burn a non-basic card permanently."), true, 0, 0, "campfire"), run_deck_ids.size() > 8)
 	_add_campfire_action(action_box, _tr("camp.transform", "Lift: transform a card"), _tr("camp.transform_hint", "Rewrite one card into another of the same type."), null, func() -> void:
-		_show_card_picker_for_transform(_tr("camp.transform", "Waxlight Lift"), _tr("camp.transform_hint", "Rewrite one card into another of the same type."), true), _has_transform_target())
+		_show_card_picker_for_transform(_tr("camp.transform", "Waxlight Lift"), _tr("camp.transform_hint", "Rewrite one card into another of the same type."), true, 0, 0, "campfire"), _has_transform_target())
 
 
 func _add_campfire_action(parent: VBoxContainer, title_text: String, hint_text: String, icon: Texture2D, action: Callable, enabled: bool) -> void:
@@ -2029,13 +2156,13 @@ func _campfire_upgrade_card(index: int) -> void:
 	_advance_after_noncombat()
 
 
-func _show_card_picker_for_upgrade(title: String, hint: String, return_to_map: bool, refund_gold: int = 0, refund_hp: int = 0) -> void:
-	pending_card_pick_context = {"action": "upgrade", "return_to_map": return_to_map, "refund_gold": refund_gold, "refund_hp": refund_hp}
+func _show_card_picker_for_upgrade(title: String, hint: String, return_to_map: bool, refund_gold: int = 0, refund_hp: int = 0, cancel_target: String = "") -> void:
+	pending_card_pick_context = {"action": "upgrade", "return_to_map": return_to_map, "refund_gold": refund_gold, "refund_hp": refund_hp, "cancel_target": cancel_target}
 	_show_run_deck_picker(title, hint, Callable(self, "_is_upgrade_pickable"))
 
 
-func _show_card_picker_for_remove(title: String, hint: String, return_to_map: bool, refund_gold: int = 0) -> void:
-	pending_card_pick_context = {"action": "remove", "return_to_map": return_to_map, "refund_gold": refund_gold, "refund_hp": 0}
+func _show_card_picker_for_remove(title: String, hint: String, return_to_map: bool, refund_gold: int = 0, cancel_target: String = "") -> void:
+	pending_card_pick_context = {"action": "remove", "return_to_map": return_to_map, "refund_gold": refund_gold, "refund_hp": 0, "cancel_target": cancel_target}
 	_show_run_deck_picker(title, hint, Callable(self, "_is_remove_pickable"))
 
 
@@ -2073,6 +2200,16 @@ func _on_run_deck_pick_cancelled(picker: Control) -> void:
 		picker.queue_free()
 	gold += int(pending_card_pick_context.get("refund_gold", 0))
 	player_hp = min(player_max_hp, player_hp + int(pending_card_pick_context.get("refund_hp", 0)))
+	if String(pending_card_pick_context.get("cancel_target", "")) == "campfire":
+		pending_card_pick_context.clear()
+		_save_run()
+		_show_campfire()
+		return
+	if String(pending_card_pick_context.get("cancel_target", "")) == "event":
+		pending_card_pick_context.clear()
+		_save_run()
+		_return_to_pending_event_or_map()
+		return
 	_finish_card_picker_context()
 
 
@@ -2178,13 +2315,13 @@ func _random_transform_replacement(old_id: String) -> String:
 	return pool[reward_rng.randi_range(0, pool.size() - 1)]
 
 
-func _show_card_picker_for_remove_any(title: String, hint: String, return_to_map: bool, refund_gold: int = 0, refund_hp: int = 0) -> void:
-	pending_card_pick_context = {"action": "remove_any", "return_to_map": return_to_map, "refund_gold": refund_gold, "refund_hp": refund_hp}
+func _show_card_picker_for_remove_any(title: String, hint: String, return_to_map: bool, refund_gold: int = 0, refund_hp: int = 0, cancel_target: String = "") -> void:
+	pending_card_pick_context = {"action": "remove_any", "return_to_map": return_to_map, "refund_gold": refund_gold, "refund_hp": refund_hp, "cancel_target": cancel_target}
 	_show_run_deck_picker(title, hint, Callable(self, "_is_remove_any_pickable"))
 
 
-func _show_card_picker_for_transform(title: String, hint: String, return_to_map: bool, refund_gold: int = 0, refund_hp: int = 0) -> void:
-	pending_card_pick_context = {"action": "transform", "return_to_map": return_to_map, "refund_gold": refund_gold, "refund_hp": refund_hp}
+func _show_card_picker_for_transform(title: String, hint: String, return_to_map: bool, refund_gold: int = 0, refund_hp: int = 0, cancel_target: String = "") -> void:
+	pending_card_pick_context = {"action": "transform", "return_to_map": return_to_map, "refund_gold": refund_gold, "refund_hp": refund_hp, "cancel_target": cancel_target}
 	_show_run_deck_picker(title, hint, Callable(self, "_is_transform_pickable"))
 
 
@@ -2458,6 +2595,7 @@ func _remove_first_matching_card(card_id: String) -> void:
 
 
 func _advance_after_noncombat() -> void:
+	pending_node.clear()
 	_save_run()
 	_show_map()
 
@@ -3024,6 +3162,21 @@ func _on_new_run_pressed() -> void:
 	_show_character_select_menu()
 
 
+func _restart_current_combat_node() -> void:
+	if pending_node.is_empty():
+		_recover_pending_node_from_current_position()
+	if not pending_node.is_empty():
+		_save_run()
+		_resume_pending_node()
+		return
+	_show_map()
+
+
+func _return_to_main_menu() -> void:
+	_save_run()
+	_show_main_menu()
+
+
 func _on_new_run_confirmed() -> void:
 	if new_run_reset_in_progress:
 		return
@@ -3080,7 +3233,7 @@ func _character_chip_texture(char_id: String) -> Texture2D:
 # pause overlay outside `current_screen` so showing it does not unload combat.
 
 func _toggle_pause_menu() -> void:
-	if pause_overlay != null and is_instance_valid(pause_overlay) and pause_overlay.visible:
+	if pause_overlay != null and is_instance_valid(pause_overlay):
 		_close_pause_menu()
 	else:
 		_open_pause_menu()
@@ -3091,7 +3244,6 @@ func _open_pause_menu() -> void:
 		pause_overlay.queue_free()
 	pause_overlay = _build_pause_overlay()
 	add_child(pause_overlay)
-	pause_overlay.move_to_front()
 	var am = _audio()
 	if am != null and am.has_method("play_sfx"):
 		am.play_sfx("sfx_pause_open")
@@ -3106,13 +3258,17 @@ func _close_pause_menu() -> void:
 		am.play_sfx("sfx_pause_close")
 
 
-func _build_pause_overlay() -> Control:
+func _build_pause_overlay() -> CanvasLayer:
+	var layer := CanvasLayer.new()
+	layer.layer = 100
+
 	var screen := Control.new()
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(screen)
 
 	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.55)
+	bg.color = Color(0, 0, 0, 0.72)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen.add_child(bg)
 
@@ -3122,7 +3278,7 @@ func _build_pause_overlay() -> Control:
 	panel.offset_top = -290
 	panel.offset_right = 240
 	panel.offset_bottom = 290
-	panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.06, 0.05, 0.04, 0.94), Color(0.62, 0.46, 0.20, 0.95)))
+	panel.add_theme_stylebox_override("normal", _glass_panel_box(Color(0.06, 0.05, 0.04, 0.98), Color(0.62, 0.46, 0.20, 0.98)))
 	screen.add_child(panel)
 
 	var pad := MarginContainer.new()
@@ -3223,7 +3379,7 @@ func _build_pause_overlay() -> Control:
 	)
 	col.add_child(menu_btn)
 
-	return screen
+	return layer
 
 
 func _build_pause_volume_row(label_text: String, key: String, vmin: float, vmax: float) -> Control:

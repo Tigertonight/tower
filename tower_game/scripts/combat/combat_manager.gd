@@ -5,6 +5,7 @@ signal combat_reward_skipped(remaining_hp: int)
 signal combat_lost
 signal boss_defeated(remaining_hp: int)
 signal reset_run_requested
+signal end_run_requested
 
 const CardDataScript := preload("res://scripts/cards/card_data.gd")
 const CardInstanceScript := preload("res://scripts/cards/card_instance.gd")
@@ -629,10 +630,16 @@ func _build_fixed_combat_layout() -> void:
 	relics_icon_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_bar.add_child(relics_icon_row)
 
+	var end_run_button := Button.new()
+	end_run_button.text = _tr("combat.restart_node", "Restart Fight")
+	end_run_button.custom_minimum_size = Vector2(96, 30)
+	end_run_button.pressed.connect(_reset_run)
+	top_bar.add_child(end_run_button)
+
 	restart_button = Button.new()
-	restart_button.text = _tr("combat.reset", "Reset")
-	restart_button.custom_minimum_size = Vector2(82, 30)
-	restart_button.pressed.connect(_reset_run)
+	restart_button.text = _tr("combat.end_game", "Quit Game")
+	restart_button.custom_minimum_size = Vector2(104, 30)
+	restart_button.pressed.connect(_end_run)
 	top_bar.add_child(restart_button)
 
 	turn_banner_label = Label.new()
@@ -711,10 +718,11 @@ func _build_fixed_combat_layout() -> void:
 	log_label.add_theme_font_size_override("font_size", 12)
 	log_label.add_theme_color_override("font_color", Color(0.78, 0.70, 0.56, 0.78))
 	log_label.add_theme_stylebox_override("normal", _stage_box(Color(0.025, 0.026, 0.024, 0.30), Color(0.35, 0.28, 0.16, 0.18)))
+	log_label.visible = false
 	hud.add_child(log_label)
 
 	hand_section_label = Label.new()
-	_pin(hand_section_label, 48, 404, 520, 428)
+	_pin(hand_section_label, 170, 390, 620, 414)
 	hand_section_label.add_theme_font_size_override("font_size", 15)
 	hud.add_child(hand_section_label)
 
@@ -1129,6 +1137,10 @@ func _save_run_state() -> void:
 
 func _reset_run() -> void:
 	reset_run_requested.emit()
+
+
+func _end_run() -> void:
+	end_run_requested.emit()
 
 
 func _start_combat() -> void:
@@ -1997,16 +2009,24 @@ func _take_player_damage(amount: int) -> void:
 	if damage > 0:
 		_spawn_float_text("-%d" % damage, _float_anchor_for(player_art_rect, Vector2(250, 250)), Color(1.0, 0.26, 0.22))
 		_flash_player()
+		var am = _audio()
+		if am != null:
+			am.play_sfx_pitched("sfx_combat_hit", 1.4, 4.0)
+			am.play_sfx("sfx_card_play_attack", -2.0, 0.02)
 		if damage >= 10:
-			_screen_shake(7.0, 0.20)
+			_screen_shake(9.0, 0.24)
 		else:
-			_screen_shake(3.5, 0.12)
+			_screen_shake(5.0, 0.16)
 		# Fire hp_threshold relics — once per combat, when crossing the
 		# configured fraction (e.g. 0.5 = below 50% HP). RelicManager handles
 		# the latch so re-entering the threshold doesn't re-fire.
 		if relic_manager != null and player_max_hp > 0:
 			var pct := float(player_hp) / float(player_max_hp)
 			relic_manager.trigger("hp_threshold", self, {"hp_pct": pct})
+	elif blocked > 0:
+		var am_block = _audio()
+		if am_block != null:
+			am_block.play_sfx("sfx_combat_block", 1.0, 0.04)
 
 
 func _tick_statuses_after_card() -> void:
